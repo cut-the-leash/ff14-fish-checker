@@ -71,9 +71,9 @@ h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 
 .prep-steps p { margin: 0; font-size: 14px; color: var(--muted); }
 /* Each picture's share of the row equals its aspect ratio, so both come out the same height with no bars. */
 .prep-examples { display: flex; gap: 12px; align-items: flex-start; width: 100%; max-width: 860px; margin-inline: auto; }
-.prep-examples figure { margin: 0; background: var(--sheet); border-radius: 10px; overflow: hidden; min-width: 0; flex: var(--ar) 1 0; }
-.prep-examples img { display: block; width: 100%; height: auto; aspect-ratio: var(--ar); }
-.prep-examples figcaption { font-size: 13px; color: var(--muted); text-align: center; padding: 6px 8px; }
+.prep-examples figure { margin: 0; min-width: 0; flex: var(--ar) 1 0; display: flex; flex-direction: column; gap: 6px; }
+.prep-examples img { display: block; width: 100%; height: auto; aspect-ratio: var(--ar); border-radius: 8px; }
+.prep-examples figcaption { font-size: 13px; color: var(--muted); text-align: center; }
 
 /* intake */
 .intake { display: flex; justify-content: center; }
