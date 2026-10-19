@@ -61,7 +61,8 @@
 
   // ---------- reference data ----------
   // icons: image of the icon sheet; cols: icons per row; unknown: strip of "?" cells
-  function buildRefs(iconsImg, cols, count, unknownImg) {
+  // blankImg: strip of empty slots, the cells after the last fish on the final page.
+  function buildRefs(iconsImg, cols, count, unknownImg, blankImg) {
     const ii = integral(iconsImg, 0, 0, iconsImg.w, iconsImg.h);
     const icons = [], iconsC = [];
     for (let k = 0; k < count; k++) {
@@ -73,7 +74,14 @@
     for (let k = 0; k < Math.floor(unknownImg.w / ICON); k++) {
       unknown.push(feature(ui, k * ICON, 0, ICON)); unknownC.push(feature(ui, k * ICON, 0, ICON, FBC));
     }
-    return { icons, unknown, coarse: { icons: iconsC, unknown: unknownC } };
+    const blank = [], blankC = [];
+    if (blankImg) {
+      const bi = integral(blankImg, 0, 0, blankImg.w, blankImg.h);
+      for (let k = 0; k < Math.floor(blankImg.w / ICON); k++) {
+        blank.push(feature(bi, k * ICON, 0, ICON)); blankC.push(feature(bi, k * ICON, 0, ICON, FBC));
+      }
+    }
+    return { icons, unknown, blank, coarse: { icons: iconsC, unknown: unknownC, blank: blankC } };
   }
 
   // ---------- coarse lattice search ----------
@@ -139,21 +147,25 @@
     const coarse = fine.f > 700 / big ? latticeMaps(img, Math.min(1, 700 / big)) : fine;
     const { w, h } = coarse, cs = coarse.score;
     const Pmin = Math.max(7, 26 * coarse.f), Pmax = Math.min(Math.min(w, h) / 10.2, 130 * coarse.f);
-    // At the coarse scale keep several pitches per region: the right one may only win after refining.
-    const keep = maxCandidates * 4;
-    const best = [];
-    const push = (s, x, y, P) => {
-      for (const b of best) if (Math.abs(b.x - x) < P * 0.6 && Math.abs(b.y - y) < P * 0.6 && Math.abs(b.P - P) < P * 0.06) {
-        if (s > b.s) { b.s = s; b.x = x; b.y = y; b.P = P; } return;
-      }
-      best.push({ s, x, y, P }); best.sort((a, b) => b.s - a.s); if (best.length > keep) best.pop();
-    };
+    // At the coarse scale keep the best placement per (area, pitch) bucket, so that a busy
+    // HUD can't use up every slot and a faint grid (an almost empty last page) still gets refined.
+    const buckets = new Map();
     for (let P = Pmin; P <= Pmax; P *= 1.02) {
-      const L = Math.round(10 * P);
+      const L = Math.round(10 * P), pb = Math.round(Math.log(P) / Math.log(1.06)), cell = 2 * P;
       for (let y = 1; y + L < h - 1; y += 2) for (let x = 1; x + L < w - 1; x += 2) {
         const sc = cs(x, y, P);
-        if (best.length < keep || sc > best[best.length - 1].s) push(sc, x, y, P);
+        const key = Math.round((x + 5 * P) / cell) + ',' + Math.round((y + 5 * P) / cell) + ',' + pb;
+        const b = buckets.get(key);
+        if (!b || sc > b.s) buckets.set(key, { s: sc, x, y, P });
       }
+    }
+    const ranked = [...buckets.values()].sort((a, b) => b.s - a.s);
+    const best = [];
+    for (const r of ranked) {
+      const near = best.filter(b => Math.abs(b.x + 5 * b.P - r.x - 5 * r.P) < 5 * Math.max(r.P, b.P) && Math.abs(b.y + 5 * b.P - r.y - 5 * r.P) < 5 * Math.max(r.P, b.P));
+      if (near.length >= 3) continue;
+      best.push(r);
+      if (best.length >= maxCandidates * 5) break;
     }
     // refine each region at the fine scale
     const k = fine.f / coarse.f, R = Math.ceil(2.5 * k) + 1;
@@ -206,13 +218,28 @@
     return m;
   }
 
+  // Distance to an empty slot; cells past the last fish must look like this.
+  function minBlank(refs, fv) {
+    if (!refs.blank || !refs.blank.length) return null;
+    let m = Infinity;
+    for (const u of refs.blank) { const d = dist(fv, u); if (d < m) m = d; }
+    return m;
+  }
+  function withBlank(refs, feats, unk) {
+    // An empty slot is weak evidence (any dark patch looks like one), so it costs extra.
+    const b = feats.map(fv => { const d = minBlank(refs, fv); return d == null ? null : d + 12; });
+    if (b[0] != null) unk.blank = b;
+    return unk;
+  }
+
   // Cost of interpreting the 100 cells as guide page p (0-based).
   function pageCost(refs, fishIcons, feats, unk, p) {
     let c = 0;
     for (let k = 0; k < 100; k++) {
       const idx = p * 100 + k;
+      if (idx >= fishIcons.length) { c += Math.min(unk.blank ? unk.blank[k] : unk[k], CLIP); continue; }
       let best = unk[k];
-      if (idx < fishIcons.length && fishIcons[idx] >= 0) best = Math.min(best, dist(feats[k], refs.icons[fishIcons[idx]]));
+      if (fishIcons[idx] >= 0) best = Math.min(best, dist(feats[k], refs.icons[fishIcons[idx]]));
       c += Math.min(best, CLIP);
     }
     return c;
@@ -290,14 +317,15 @@
       const g = { x: c.x + sx * c.P, y: c.y + sy * c.P, P: c.P };
       if (g.x < -c.P * 0.2 || g.y < -c.P * 0.2 || g.x + 10 * g.P > img.w + c.P * 0.2 || g.y + 10 * g.P > img.h + c.P * 0.2) continue;
       const feats = sub.map(k => feature(ii, g.x + (k % 10) * g.P, g.y + Math.floor(k / 10) * g.P, s, FBC));
-      const unk = feats.map(fv => minUnknown(refs.coarse, fv));
+      const unk = withBlank(refs.coarse, feats, feats.map(fv => minUnknown(refs.coarse, fv)));
       let bc = Infinity;
       for (let p = 0; p < pages; p++) {
         let cst = 0;
         sub.forEach((k, j) => {
           const idx = p * 100 + k;
+          if (idx >= fishIcons.length) { cst += Math.min(unk.blank ? unk.blank[j] : unk[j], CLIP); return; }
           let b = unk[j];
-          if (idx < fishIcons.length && fishIcons[idx] >= 0) b = Math.min(b, dist(feats[j], refs.coarse.icons[fishIcons[idx]]));
+          if (fishIcons[idx] >= 0) b = Math.min(b, dist(feats[j], refs.coarse.icons[fishIcons[idx]]));
           cst += Math.min(b, CLIP);
         });
         if (cst < bc) bc = cst;
@@ -313,7 +341,7 @@
     const ii = integral(img, g0.x - pad, g0.y - pad, g0.P * 10 + 2 * pad, g0.P * 10 + 2 * pad);
     const evalAt = (g, page) => {
       const feats = cellFeatures(ii, g);
-      const unk = feats.map(fv => minUnknown(refs, fv));
+      const unk = withBlank(refs, feats, feats.map(fv => minUnknown(refs, fv)));
       if (page == null) { const b = bestPage(refs, fishIcons, feats, unk); return { cost: b.cost, second: b.second, page: b.page, feats, unk }; }
       return { cost: pageCost(refs, fishIcons, feats, unk, page), page, feats, unk };
     };
@@ -370,13 +398,17 @@
     const pad = Math.round(Math.max(img0.w, img0.h) * 0.06) + 8;
     const img = padImage(img0, pad);
     const hint = hint0 ? { x: hint0.x + pad, y: hint0.y + pad, P: hint0.P } : null;
-    const r = analyzePadded(img, refs, fishIcons, hint);
+    // Look for the grid in the original too: padding shrinks the working scale, which can
+    // hide the faint lines of an almost empty page in a large screenshot.
+    let extra = [];
+    if (!hint) extra = findLattice(img0, 14).map(c => ({ x: c.x + pad, y: c.y + pad, P: c.P, s: c.s }));
+    const r = analyzePadded(img, refs, fishIcons, hint, extra);
     if (r.grid) r.grid = { x: r.grid.x - pad, y: r.grid.y - pad, P: r.grid.P };
     return r;
   }
 
-  function analyzePadded(img, refs, fishIcons, hint) {
-    const lat = hint ? [hint] : findLattice(img, 10);
+  function analyzePadded(img, refs, fishIcons, hint, extra) {
+    const lat = hint ? [hint] : findLattice(img, Math.max(img.w, img.h) > 1600 ? 6 : 14).concat(extra || []);
     let cands = [];
     for (const c of lat) {
       cands = cands.concat(shiftCandidates(img, refs, fishIcons, c, 2));

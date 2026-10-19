@@ -4,7 +4,7 @@ let refs = null, fishIcons = null;
 onmessage = (e) => {
   const m = e.data;
   if (m.type === 'init') {
-    refs = FishReader.buildRefs(m.icons, m.cols, m.count, m.unknown);
+    refs = FishReader.buildRefs(m.icons, m.cols, m.count, m.unknown, m.blank);
     fishIcons = m.fishIcons;
     postMessage({ type: 'ready' });
     return;

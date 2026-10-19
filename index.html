@@ -323,7 +323,7 @@ footer a { color: inherit; }
     const pages = Math.ceil(fish.length / 100);
     $('dataInfo').textContent = `물고기 데이터: ${fish.length.toLocaleString()}종, 트래커 기준 ${meta.version.split('_')[0]} 패치 · 도감 ${pages}페이지`;
     drawPager();
-    const [icons, unknown] = await Promise.all([imageDataFrom('icons.png'), imageDataFrom('unknown.png')]);
+    const [icons, unknown, blank] = await Promise.all([imageDataFrom('icons.png'), imageDataFrom('unknown.png'), imageDataFrom('blank.png')]);
     const count = Math.max(...fish.map(r => r[2])) + 1;
     const fishIcons = fish.map(r => r[2]);
     const n = Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 2) - 1));
@@ -334,7 +334,7 @@ footer a { color: inherit; }
         w.addEventListener('message', function once(e) { if (e.data.type === 'ready') { w.removeEventListener('message', once); res(); } });
       }));
       w.addEventListener('message', onWorkerMessage);
-      w.postMessage({ type: 'init', icons: { w: icons.w, h: icons.h, data: new Uint8ClampedArray(icons.data) }, unknown: { w: unknown.w, h: unknown.h, data: new Uint8ClampedArray(unknown.data) }, cols: meta.cols, count, fishIcons });
+      w.postMessage({ type: 'init', icons: { w: icons.w, h: icons.h, data: new Uint8ClampedArray(icons.data) }, unknown: { w: unknown.w, h: unknown.h, data: new Uint8ClampedArray(unknown.data) }, blank: { w: blank.w, h: blank.h, data: new Uint8ClampedArray(blank.data) }, cols: meta.cols, count, fishIcons });
       workers.push({ w, busy: false });
     }
     workerReady = Promise.all(readies);
