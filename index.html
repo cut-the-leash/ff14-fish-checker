@@ -8,6 +8,8 @@
 <body>
 <title>으메메한 어류도감 체커</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -60,7 +62,9 @@ button, textarea, input { font: inherit; color: inherit; }
 
 /* header */
 header { display: block; }
-h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 44px); line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 44px); line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; display: flex; align-items: center; gap: 0.3em; }
+h1 span { min-width: 0; word-break: keep-all; }
+h1 .logo { height: 1.5em; width: auto; flex: none; }
 .lede { margin: 6px 0 0; color: var(--muted); }
 .prep { border: 2px solid var(--lure); background: var(--lure-soft); border-radius: 14px; padding-block: 18px 20px; padding-inline: 20px; display: flex; flex-direction: column; gap: 14px; }
 .prep h2 { margin: 0; font-family: var(--display); font-size: 20px; font-weight: 700; color: var(--lure); }
@@ -184,7 +188,7 @@ footer a { color: inherit; }
 <div class="wrap">
   <header>
     <div>
-      <h1>으메메한 어류도감 체커</h1>
+      <h1><img class="logo" src="logo.png" alt="" width="199" height="131"><span>으메메한 어류도감 체커</span></h1>
       <p class="lede">파이널 판타지 14 어류도감 스크린샷에서 낚은 물고기를 읽어, <a href="https://ff14fish.carbuncleplushy.com/" target="_blank" rel="noopener">Fish Tracker</a>에 바로 넣을 수 있는 목록으로 만들어 준담메. 사진은 이 브라우저 안에서만 읽고 어디에도 안 올린담메.</p>
     </div>
   </header>

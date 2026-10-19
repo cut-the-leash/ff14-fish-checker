@@ -57,6 +57,7 @@
 | `unknown.png`, `blank.png` | "?" 칸과 빈 슬롯 견본 |
 | `sample.png` | 처음 열었을 때 보여 주는 예시 스크린샷 |
 | `example-crop.jpg`, `example-full.jpg` | 찍기 전 안내에 쓰는 예시 사진 |
+| `logo.png`, `favicon.png`, `apple-touch-icon.png` | 제목 옆 그림과 사이트 아이콘 |
 
 ## 출처와 라이선스
 
