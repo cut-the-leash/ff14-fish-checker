@@ -59,15 +59,21 @@ button, textarea, input { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
 /* header */
-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 32px; align-items: end; }
+header { display: block; }
 h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 44px); line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
-.lede { margin: 6px 0 0; color: var(--muted); max-width: 58ch; }
-.steps { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; flex-wrap: wrap; }
-.steps li { font-size: 13px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--sheet); white-space: nowrap; }
-.steps b { font-family: var(--mono); font-weight: 500; color: var(--lure); margin-right: 6px; }
+.lede { margin: 6px 0 0; color: var(--muted); }
+.prep { border: 2px solid var(--lure); background: var(--lure-soft); border-radius: 14px; padding-block: 18px 20px; padding-inline: 20px; display: flex; flex-direction: column; gap: 14px; }
+.prep h2 { margin: 0; font-family: var(--display); font-size: 20px; font-weight: 700; color: var(--lure); }
+.prep-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.prep-steps li { display: flex; gap: 14px; align-items: flex-start; background: var(--sheet); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.prep-steps .num { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--lure); color: var(--sheet); display: grid; place-items: center; font-family: var(--mono); font-weight: 500; font-size: 17px; }
+.prep-steps strong { display: block; font-size: 17px; font-weight: 600; margin-bottom: 2px; }
+.prep-steps p { margin: 0; font-size: 14px; color: var(--muted); }
 
 /* intake */
-.intake { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; }
+.intake { display: flex; justify-content: center; }
+.drop { width: 100%; text-align: center; align-items: center; }
+.main-col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 .drop {
   border: 1.5px dashed var(--muted); border-radius: 14px; background: var(--sheet);
   padding: 22px; display: flex; flex-direction: column; gap: 10px; justify-content: center; min-height: 168px;
@@ -76,7 +82,7 @@ h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 
 .drop.over { border-color: var(--lure); background: var(--lure-soft); }
 .drop strong { font-family: var(--display); font-size: 21px; font-weight: 700; text-wrap: balance; }
 .drop p { margin: 0; color: var(--muted); font-size: 14px; }
-.drop .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.drop .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: center; }
 .btn { border: 1px solid var(--ink); background: var(--ink); color: var(--paper); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-weight: 500; }
 .btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
 .btn:disabled { opacity: .45; cursor: default; }
@@ -87,6 +93,8 @@ label.btn { display: inline-block; }
 .coverage { border: 1px solid var(--line); border-radius: 14px; background: var(--sheet); padding: 18px; display: flex; flex-direction: column; gap: 12px; }
 .coverage h2, .rail h2, .shots-head h2 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; font-weight: 600; }
 .pager { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+.coverage { container-type: inline-size; }
+@container (min-width: 620px) { .pager { grid-template-columns: repeat(16, minmax(0, 1fr)); } }
 .pg { aspect-ratio: 1; max-width: 100%; border-radius: 8px; border: 1px solid var(--line); display: grid; place-items: center; font-family: var(--mono); font-size: 13px; color: var(--absent); background: var(--paper); position: relative; }
 button.pg { font-family: var(--mono); padding: 0; cursor: pointer; }
 button.pg:disabled { cursor: default; }
@@ -106,8 +114,8 @@ button.pg:not(:disabled):hover { border-color: var(--ink); }
 .sw.c { border-color: var(--kelp); background: var(--kelp-soft); }
 .sw.u { border-color: var(--amber); background: var(--amber-soft); }
 .sw.x { border-color: var(--absent); border-radius: 50%; }
-.shots { display: grid; grid-template-columns: minmax(0, 720px); gap: 14px; }
-.viewhint { margin: 0; padding: 28px 20px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 14px; text-align: center; max-width: 720px; }
+.shots { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.viewhint { margin: 0; padding: 28px 20px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 14px; text-align: center; }
 .progress { font-size: 13px; color: var(--muted); display: inline-flex; align-items: center; gap: 8px; }
 .shot { background: var(--sheet); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .shot.bad { border-color: var(--amber); }
@@ -158,8 +166,8 @@ footer { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line)
 footer a { color: inherit; }
 
 @media (max-width: 880px) {
-  header { grid-template-columns: 1fr; }
-  .intake, .bench { grid-template-columns: 1fr; }
+  .bench { grid-template-columns: 1fr; }
+  .prep-steps { grid-template-columns: 1fr; }
 }
 </style>
 
@@ -169,12 +177,27 @@ footer a { color: inherit; }
       <h1>으메메한 어류도감 체커</h1>
       <p class="lede">파이널 판타지 14 어류도감 스크린샷에서 낚은 물고기를 읽어, Carbuncle Plushy 낚시 트래커에 바로 넣을 수 있는 목록으로 만들어 준담메. 사진은 이 브라우저 안에서만 읽고 어디에도 안 올린담메.</p>
     </div>
-    <ol class="steps" aria-label="사용 순서">
-      <li><b>1</b>도감 필터 끄기</li>
-      <li><b>2</b>페이지마다 캡처</li>
-      <li><b>3</b>여기에 놓고 복사</li>
-    </ol>
   </header>
+
+  <section class="prep" aria-labelledby="prepTitle">
+    <h2 id="prepTitle">찍기 전에 꼭 확인해달람메</h2>
+    <ol class="prep-steps">
+      <li>
+        <span class="num">1</span>
+        <div>
+          <strong>도감 필터 끄기</strong>
+          <p>어류도감 오른쪽 위 깔때기 아이콘을 꺼달람메. 켜져 있으면 칸 위치가 달라져서 못 읽는담메.</p>
+        </div>
+      </li>
+      <li>
+        <span class="num">2</span>
+        <div>
+          <strong>페이지마다 캡처</strong>
+          <p>1페이지부터 마지막 페이지까지 한 장씩 찍어달람메. 도감 창만 잘라도 되고 게임 전체 화면도 된담메.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
 
   <section class="intake">
     <div class="drop" id="drop" tabindex="0" role="button" aria-label="스크린샷 추가">
@@ -186,15 +209,16 @@ footer a { color: inherit; }
       </div>
       <input id="file" class="vh" type="file" accept="image/*" multiple>
     </div>
-    <div class="coverage">
-      <h2>읽은 페이지 · 눌러서 보기</h2>
-      <div class="pager" id="pager"></div>
-      <p id="coverText">아직 읽은 페이지가 없담메.</p>
-    </div>
   </section>
 
   <section class="bench">
-    <div>
+    <div class="main-col">
+      <div class="coverage">
+        <h2>읽은 페이지 · 눌러서 보기</h2>
+        <div class="pager" id="pager"></div>
+        <p id="coverText">아직 읽은 페이지가 없담메.</p>
+      </div>
+      <div>
       <div class="shots-head">
         <h2>스크린샷 <span class="progress" id="progress" hidden><i class="spin"></i><span id="progressText"></span></span></h2>
         <div class="legend">
@@ -205,6 +229,7 @@ footer a { color: inherit; }
       </div>
       <p class="viewhint" id="viewHint">스크린샷을 올리면 여기에 판독 결과가 나온담메.</p>
       <div class="shots" id="shots"></div>
+      </div>
     </div>
 
     <aside class="rail" aria-label="내보내기">
