@@ -81,7 +81,9 @@
         blank.push(feature(bi, k * ICON, 0, ICON)); blankC.push(feature(bi, k * ICON, 0, ICON, FBC));
       }
     }
-    return { icons, unknown, blank, coarse: { icons: iconsC, unknown: unknownC, blank: blankC } };
+    const unknown3 = [];
+    for (let k = 0; k < Math.floor(unknownImg.w / ICON); k++) unknown3.push(feature(ui, k * ICON, 0, ICON, 3));
+    return { icons, unknown, blank, unknown3, coarse: { icons: iconsC, unknown: unknownC, blank: blankC } };
   }
 
   // ---------- coarse lattice search ----------
@@ -394,6 +396,51 @@
     return { w, h, data };
   }
 
+  function questionSeeds(img, refs, fishIcons) {
+    const f = Math.min(1, 700 / Math.max(img.w, img.h));
+    const w = Math.floor(img.w * f), h = Math.floor(img.h * f), inv = 1 / f, d = img.data;
+    // downscaled colour copy
+    const small = { w, h, data: new Uint8ClampedArray(w * h * 4) };
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const sy0 = Math.floor(y * inv), sy1 = Math.max(sy0 + 1, Math.floor((y + 1) * inv));
+      const sx0 = Math.floor(x * inv), sx1 = Math.max(sx0 + 1, Math.floor((x + 1) * inv));
+      let r = 0, g = 0, b = 0, n = 0;
+      for (let yy = sy0; yy < sy1; yy++) for (let xx = sx0; xx < sx1; xx++) { const p = (yy * img.w + xx) * 4; r += d[p]; g += d[p + 1]; b += d[p + 2]; n++; }
+      const q = (y * w + x) * 4; small.data[q] = r / n; small.data[q + 1] = g / n; small.data[q + 2] = b / n; small.data[q + 3] = 255;
+    }
+    const ii = integral(small, 0, 0, w, h);
+    const out = [];
+    for (let P = Math.max(8, 26 * f); P <= Math.min(w, h) / 10.2 && P <= 130 * f; P *= 1.05) {
+      const step = Math.max(1, Math.round(P / 6));
+      const hits = [];
+      for (let y = 0; y + P < h; y += step) for (let x = 0; x + P < w; x += step) {
+        const fv = feature(ii, x, y, P, 3);
+        let m = Infinity;
+        for (const u of refs.unknown3) { const dd = dist(fv, u); if (dd < m) m = dd; }
+        if (m < 14) hits.push({ x, y, m });
+      }
+      if (hits.length < 3) continue;
+      // keep hits that line up with others on a P-spaced grid
+      let bestHit = null, bestSupport = 0;
+      for (const a of hits) {
+        let sup = 0;
+        for (const b of hits) {
+          const cx = (b.x - a.x) / P, cy = (b.y - a.y) / P;
+          if (Math.abs(cx) <= 9.3 && Math.abs(cy) <= 9.3 && Math.abs(cx - Math.round(cx)) < 0.12 && Math.abs(cy - Math.round(cy)) < 0.12 && (Math.round(cx) || Math.round(cy))) sup++;
+        }
+        if (sup > bestSupport) { bestSupport = sup; bestHit = a; }
+      }
+      if (bestSupport >= 3) out.push({ x: bestHit.x / f, y: bestHit.y / f, P: P / f, support: bestSupport });
+    }
+    out.sort((a, b) => b.support - a.support);
+    // The hit is some cell of the grid; try every row and column it could be.
+    const offs = [];
+    for (let sy = -9; sy <= 0; sy++) for (let sx = -9; sx <= 0; sx++) offs.push([sx, sy]);
+    let seeds = [];
+    for (const c of out.slice(0, 3)) seeds = seeds.concat(shiftCandidates(img, refs, fishIcons, c, 4, offs));
+    return seeds;
+  }
+
   function analyze(img0, refs, fishIcons, hint0) {
     const pad = Math.round(Math.max(img0.w, img0.h) * 0.06) + 8;
     const img = padImage(img0, pad);
@@ -402,14 +449,23 @@
     // hide the faint lines of an almost empty page in a large screenshot.
     let extra = [];
     if (!hint) extra = findLattice(img0, 14).map(c => ({ x: c.x + pad, y: c.y + pad, P: c.P, s: c.s }));
-    const r = analyzePadded(img, refs, fishIcons, hint, extra);
+    let r = analyzePadded(img, refs, fishIcons, hint, extra);
+    if (!r.ok && !hint) {
+      // Grid lines too faint (an almost empty last page in a big screenshot): look for the
+      // "?" cells themselves and build the grid from where they sit.
+      const seeds = questionSeeds(img, refs, fishIcons);
+      if (seeds.length) {
+        const r2 = analyzePadded(img, refs, fishIcons, null, null, seeds);
+        if (r2.ok) r = r2;
+      }
+    }
     if (r.grid) r.grid = { x: r.grid.x - pad, y: r.grid.y - pad, P: r.grid.P };
     return r;
   }
 
-  function analyzePadded(img, refs, fishIcons, hint, extra) {
-    const lat = hint ? [hint] : findLattice(img, Math.max(img.w, img.h) > 1600 ? 6 : 14).concat(extra || []);
-    let cands = [];
+  function analyzePadded(img, refs, fishIcons, hint, extra, seeds) {
+    const lat = seeds ? [] : hint ? [hint] : findLattice(img, Math.max(img.w, img.h) > 1600 ? 6 : 14).concat(extra || []);
+    let cands = seeds ? seeds.slice() : [];
     for (const c of lat) {
       cands = cands.concat(shiftCandidates(img, refs, fishIcons, c, 2));
       cands = cands.concat(shiftCandidates(img, refs, fishIcons, snapToGaps(img, c), 2));
