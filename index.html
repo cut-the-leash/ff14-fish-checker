@@ -69,6 +69,11 @@ h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 
 .prep-steps .num { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--lure); color: var(--sheet); display: grid; place-items: center; font-family: var(--mono); font-weight: 500; font-size: 17px; }
 .prep-steps strong { display: block; font-size: 17px; font-weight: 600; margin-bottom: 2px; }
 .prep-steps p { margin: 0; font-size: 14px; color: var(--muted); }
+/* Each picture's share of the row equals its aspect ratio, so both come out the same height with no bars. */
+.prep-examples { display: flex; gap: 12px; align-items: flex-start; width: 100%; max-width: 860px; margin-inline: auto; }
+.prep-examples figure { margin: 0; min-width: 0; flex: var(--ar) 1 0; display: flex; flex-direction: column; gap: 6px; }
+.prep-examples img { display: block; width: 100%; height: auto; aspect-ratio: var(--ar); border-radius: 8px; }
+.prep-examples figcaption { font-size: 13px; color: var(--muted); text-align: center; }
 
 /* intake */
 .intake { display: flex; justify-content: center; }
@@ -197,6 +202,16 @@ footer a { color: inherit; }
         </div>
       </li>
     </ol>
+    <div class="prep-examples">
+      <figure style="--ar: 1.5960">
+        <img src="example-crop.jpg" alt="필터를 끈 어류도감 1페이지를 도감 창만 잘라서 찍은 예시" width="640" height="401" loading="lazy">
+        <figcaption>예시 1 · 도감 창만 자른 사진</figcaption>
+      </figure>
+      <figure style="--ar: 2.3873">
+        <img src="example-full.jpg" alt="필터를 끈 어류도감 2페이지가 보이는 게임 전체 화면 예시" width="900" height="377" loading="lazy">
+        <figcaption>예시 2 · 게임 전체 화면</figcaption>
+      </figure>
+    </div>
   </section>
 
   <section class="intake">
