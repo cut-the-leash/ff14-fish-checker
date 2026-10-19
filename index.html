@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>으메메한 어류도감 체커</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a working bench. Intake + page coverage on top, read screenshots in a grid, export rail beside them. */
+:root {
+  --paper: #eef1ed;        /* sea-mist page */
+  --sheet: #f8faf7;        /* raised surfaces */
+  --ink: #18242b;          /* deep-water ink */
+  --muted: #5b6a70;
+  --line: #cfd8d4;
+  --kelp: #2f7d55;         /* caught */
+  --kelp-soft: #d7eadf;
+  --amber: #b9771a;        /* needs a look */
+  --amber-soft: #f6e6c8;
+  --lure: #c2502f;         /* accent: lure orange */
+  --lure-soft: #f5ddd4;
+  --absent: #8b979b;
+  --focus: #1f6fa8;
+  --display: "Gowun Batang", "Noto Serif KR", "AppleMyungjo", serif;
+  --body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f171b; --sheet: #162227; --ink: #dfe8e4; --muted: #95a6a9; --line: #2a3a40;
+    --kelp: #58b884; --kelp-soft: #1d3a2b; --amber: #e0a94a; --amber-soft: #3a2d15;
+    --lure: #ea7b57; --lure-soft: #3b2219; --absent: #6d7c80; --focus: #6fb2e6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f171b; --sheet: #162227; --ink: #dfe8e4; --muted: #95a6a9; --line: #2a3a40;
+  --kelp: #58b884; --kelp-soft: #1d3a2b; --amber: #e0a94a; --amber-soft: #3a2d15;
+  --lure: #ea7b57; --lure-soft: #3b2219; --absent: #6d7c80; --focus: #6fb2e6;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--paper); color: var(--ink);
+  font-family: var(--body); font-size: 15px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+button, textarea, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* header */
+header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 32px; align-items: end; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 44px); line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+.lede { margin: 6px 0 0; color: var(--muted); max-width: 58ch; }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; gap: 8px; flex-wrap: wrap; }
+.steps li { font-size: 13px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--sheet); white-space: nowrap; }
+.steps b { font-family: var(--mono); font-weight: 500; color: var(--lure); margin-right: 6px; }
+
+/* intake */
+.intake { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; }
+.drop {
+  border: 1.5px dashed var(--muted); border-radius: 14px; background: var(--sheet);
+  padding: 22px; display: flex; flex-direction: column; gap: 10px; justify-content: center; min-height: 168px;
+  cursor: pointer; transition: border-color .15s, background .15s;
+}
+.drop.over { border-color: var(--lure); background: var(--lure-soft); }
+.drop strong { font-family: var(--display); font-size: 21px; font-weight: 700; text-wrap: balance; }
+.drop p { margin: 0; color: var(--muted); font-size: 14px; }
+.drop .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.btn { border: 1px solid var(--ink); background: var(--ink); color: var(--paper); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-weight: 500; }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn:disabled { opacity: .45; cursor: default; }
+label.btn { display: inline-block; }
+.vh { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; background: var(--paper); }
+
+.coverage { border: 1px solid var(--line); border-radius: 14px; background: var(--sheet); padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.coverage h2, .rail h2, .shots-head h2 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; font-weight: 600; }
+.pager { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+.pg { aspect-ratio: 1; max-width: 100%; border-radius: 8px; border: 1px solid var(--line); display: grid; place-items: center; font-family: var(--mono); font-size: 13px; color: var(--absent); background: var(--paper); position: relative; }
+button.pg { font-family: var(--mono); padding: 0; cursor: pointer; }
+button.pg:disabled { cursor: default; }
+button.pg:not(:disabled):hover { border-color: var(--ink); }
+.pg.sel { outline: 2px solid var(--ink); outline-offset: 1px; font-weight: 600; }
+.pg.have { border-color: var(--kelp); color: var(--ink); background: var(--kelp-soft); }
+.pg.warn { border-color: var(--amber); background: var(--amber-soft); color: var(--ink); }
+.pg small { position: absolute; bottom: 2px; font-size: 10px; color: var(--muted); }
+.coverage p { margin: 0; font-size: 13px; color: var(--muted); }
+
+/* main */
+.bench { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+.shots-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; border: 2px solid; display: inline-block; }
+.sw.c { border-color: var(--kelp); background: var(--kelp-soft); }
+.sw.u { border-color: var(--amber); background: var(--amber-soft); }
+.sw.x { border-color: var(--absent); border-radius: 50%; }
+.shots { display: grid; grid-template-columns: minmax(0, 720px); gap: 14px; }
+.viewhint { margin: 0; padding: 28px 20px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 14px; text-align: center; max-width: 720px; }
+.progress { font-size: 13px; color: var(--muted); display: inline-flex; align-items: center; gap: 8px; }
+.shot { background: var(--sheet); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.shot.bad { border-color: var(--amber); }
+.shot-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.shot-top .pgno { font-family: var(--display); font-weight: 700; font-size: 19px; }
+.shot-top .meta { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+.tag { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--lure-soft); color: var(--lure); margin-left: 6px; vertical-align: 2px; font-family: var(--body); font-weight: 600; }
+.canvas-box { position: relative; border-radius: 8px; overflow: hidden; background: #0b1114; }
+.canvas-box canvas { display: block; width: 100%; height: auto; cursor: crosshair; }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--paper); font-size: 12px; padding: 3px 8px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -130%); }
+.shot .note { font-size: 13px; color: var(--muted); margin: 0; }
+.shot.bad .note { color: var(--ink); }
+.shot-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.shot-actions button { font-size: 13px; padding: 5px 10px; }
+.busy { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--lure); animation: sp 0.8s linear infinite; }
+@keyframes sp { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } .drop { transition: none; } }
+
+/* export rail */
+.rail { background: var(--sheet); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+.tally { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.tally div { display: flex; flex-direction: column; }
+.tally b { font-family: var(--display); font-size: 30px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.tally span { font-size: 12px; color: var(--muted); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+.seg label { text-align: center; padding: 7px 8px; font-size: 13px; cursor: pointer; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg input:checked + span { font-weight: 600; }
+.seg label:has(input:checked) { background: var(--ink); color: var(--paper); }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: -2px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 13px; font-weight: 600; }
+.field small { font-size: 12px; color: var(--muted); }
+textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); padding: 8px 10px; font-family: var(--mono); font-size: 12px; line-height: 1.5; resize: vertical; }
+#out { min-height: 110px; }
+#merge { min-height: 58px; }
+.copyrow { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.copied { font-size: 13px; color: var(--kelp); }
+.howto { margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+.subsec { border-top: 1px solid var(--line); padding-top: 16px; display: flex; flex-direction: column; gap: 12px; }
+.seg3 { grid-template-columns: repeat(3, 1fr); }
+.subnote { margin: 0; font-size: 13px; color: var(--muted); }
+#txt { min-height: 150px; font-family: var(--body); font-size: 13px; }
+.warnbox { font-size: 13px; background: var(--amber-soft); border-radius: 8px; padding: 8px 10px; }
+
+footer { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 4px; }
+footer a { color: inherit; }
+
+@media (max-width: 880px) {
+  header { grid-template-columns: 1fr; }
+  .intake, .bench { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>으메메한 어류도감 체커</h1>
+      <p class="lede">파이널 판타지 14 어류도감 스크린샷에서 낚은 물고기를 읽어, Carbuncle Plushy 낚시 트래커에 바로 넣을 수 있는 목록으로 만들어 준담메. 사진은 이 브라우저 안에서만 읽고 어디에도 안 올린담메.</p>
+    </div>
+    <ol class="steps" aria-label="사용 순서">
+      <li><b>1</b>도감 필터 끄기</li>
+      <li><b>2</b>페이지마다 캡처</li>
+      <li><b>3</b>여기에 놓고 복사</li>
+    </ol>
+  </header>
+
+  <section class="intake">
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="스크린샷 추가">
+      <strong>스크린샷을 여기에 끌어다 놓아달람메!</strong>
+      <p>도감 1~16페이지를 한꺼번에 올려도 된담메. 순서는 상관없담메. 게임 전체 화면을 찍어도 도감을 찾아낸담메.</p>
+      <div class="row">
+        <label class="btn" id="pick" for="file">파일 고르기</label>
+        <span style="font-size:13px;color:var(--muted)">또는 복사한 이미지를 <span class="kbd">Ctrl</span> + <span class="kbd">V</span></span>
+      </div>
+      <input id="file" class="vh" type="file" accept="image/*" multiple>
+    </div>
+    <div class="coverage">
+      <h2>읽은 페이지 · 눌러서 보기</h2>
+      <div class="pager" id="pager"></div>
+      <p id="coverText">아직 읽은 페이지가 없담메.</p>
+    </div>
+  </section>
+
+  <section class="bench">
+    <div>
+      <div class="shots-head">
+        <h2>스크린샷 <span class="progress" id="progress" hidden><i class="spin"></i><span id="progressText"></span></span></h2>
+        <div class="legend">
+          <span><i class="sw c"></i>낚음</span>
+          <span><i class="sw u"></i>확인 필요</span>
+          <span><i class="sw x"></i>낚았지만 트래커에 없음</span>
+        </div>
+      </div>
+      <p class="viewhint" id="viewHint">스크린샷을 올리면 여기에 판독 결과가 나온담메.</p>
+      <div class="shots" id="shots"></div>
+    </div>
+
+    <aside class="rail" aria-label="내보내기">
+      <h2>Carbuncle Plushy로 보내기</h2>
+      <div class="tally">
+        <div><b id="nAll">0</b><span>넣을 물고기</span></div>
+        <div><b id="nBig">0</b><span>그중 터주</span></div>
+      </div>
+      <div class="seg" role="radiogroup" aria-label="포함할 물고기">
+        <label><input type="radio" name="scope" id="scopeAll" value="all" checked><span>트래커 전체</span></label>
+        <label><input type="radio" name="scope" id="scopeBig" value="big"><span>터주만</span></label>
+      </div>
+      <div class="field">
+        <label for="merge">지금 체크해 둔 목록과 합치기 <span style="font-weight:400;color:var(--muted)">(선택)</span></label>
+        <textarea id="merge" placeholder="Carbuncle Plushy의 Export Settings 내용을 붙여넣으면 기존 체크를 안 지우고 합친담메."></textarea>
+        <small id="mergeInfo"></small>
+      </div>
+      <div class="field">
+        <label for="out">가져오기용 목록</label>
+        <textarea id="out" readonly></textarea>
+      </div>
+      <div id="unsureWarn" class="warnbox" hidden></div>
+      <div class="copyrow">
+        <button class="btn" id="copy" type="button">목록 복사</button>
+        <span class="copied" id="copied" aria-live="polite"></span>
+      </div>
+      <ol class="howto">
+        <li>Carbuncle Plushy 오른쪽 위 톱니바퀴를 눌러달람메.</li>
+        <li>Import Settings를 누르고 Exported Data 칸에 붙여넣어달람메.</li>
+        <li>Load를 누르면 체크가 반영된담메. 기존 체크는 이 목록으로 바뀐담메. 남기고 싶으면 위 합치기 칸을 써달람메.</li>
+      </ol>
+      <div class="subsec">
+        <h2>텍스트 목록</h2>
+        <p class="subnote">스크린샷에서 읽은 물고기 이름을 도감 순서대로 한 줄씩 적었담메. 메모장이나 엑셀에 붙여넣어서 써달람메.</p>
+        <div class="seg seg3" role="radiogroup" aria-label="텍스트 목록에 넣을 물고기">
+          <label><input type="radio" name="tscope" id="tAll" value="all" checked><span>낚은 전체</span></label>
+          <label><input type="radio" name="tscope" id="tTracker" value="tracker"><span>트래커만</span></label>
+          <label><input type="radio" name="tscope" id="tBig" value="big"><span>터주만</span></label>
+        </div>
+        <div class="field">
+          <label for="txt">물고기 이름 <span id="txtCount" style="font-weight:400;color:var(--muted)"></span></label>
+          <textarea id="txt" readonly></textarea>
+        </div>
+        <div class="copyrow">
+          <button class="btn" id="copyTxt" type="button">텍스트 복사</button>
+          <button class="btn ghost" id="saveTxt" type="button">txt로 저장</button>
+          <span class="copied" id="txtMsg" aria-live="polite"></span>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <footer>
+    <span id="dataInfo">물고기 데이터를 불러오는 중이담메…</span>
+    <span>물고기 목록과 아이콘은 <a href="https://github.com/icykoneko/ff14-fish-tracker-app" target="_blank" rel="noopener">FFX|V Fish Tracker App</a>(MIT 라이선스)에서 가져왔담메. 한국 서버에 아직 없는 물고기가 있으면 마지막 페이지 근처가 어긋날 수 있담메.</span>
+  </footer>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const TOTAL_PAGES_FALLBACK = 16;
+
+  let fish = [];            // [id, name, iconIndex, inTracker, big]
+  let worker = null, workerReady = null;
+  const shots = [];          // {id, name, sample, status, result, overrides, preview, scale, el}
+  let nextId = 1;
+  let selectedPage = null;   // only this page's screenshot is shown
+
+  // ---------- data ----------
+  function imageDataFrom(src) {
+    return new Promise((resolve, reject) => {
+      const im = new Image();
+      im.onload = () => {
+        const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+        const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(im, 0, 0);
+        const d = g.getImageData(0, 0, c.width, c.height);
+        resolve({ w: d.width, h: d.height, data: d.data, el: im });
+      };
+      im.onerror = () => reject(new Error('이미지를 열 수 없담메.'));
+      im.src = src;
+    });
+  }
+
+  async function boot() {
+    const meta = await (await fetch('fish.json')).json();
+    fish = meta.fish;
+    const pages = Math.ceil(fish.length / 100);
+    $('dataInfo').textContent = `물고기 데이터: ${fish.length.toLocaleString()}종, 트래커 기준 ${meta.version.split('_')[0]} 패치 · 도감 ${pages}페이지`;
+    drawPager();
+    const [icons, unknown] = await Promise.all([imageDataFrom('icons.png'), imageDataFrom('unknown.png')]);
+    const count = Math.max(...fish.map(r => r[2])) + 1;
+    const fishIcons = fish.map(r => r[2]);
+    worker = new Worker('worker.js');
+    workerReady = new Promise((res) => {
+      worker.addEventListener('message', function once(e) { if (e.data.type === 'ready') { worker.removeEventListener('message', once); res(); } });
+    });
+    worker.addEventListener('message', onWorkerMessage);
+    worker.postMessage({ type: 'init', icons: { w: icons.w, h: icons.h, data: icons.data }, unknown: { w: unknown.w, h: unknown.h, data: unknown.data }, cols: meta.cols, count, fishIcons });
+    await workerReady;
+    addSample();
+  }
+
+  // ---------- intake ----------
+  const drop = $('drop'), file = $('file');
+  // A real <label for> opens the picker reliably on phones; script clicks are only a fallback.
+  $('pick').addEventListener('click', (e) => { e.stopPropagation(); });
+  drop.addEventListener('click', (e) => { if (e.target === file || e.target.closest('label')) return; file.click(); });
+  drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); file.click(); } });
+  file.addEventListener('change', () => { addFiles([...file.files]); file.value = ''; });
+  ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', (e) => addFiles([...e.dataTransfer.files]));
+  document.addEventListener('dragover', (e) => e.preventDefault());
+  document.addEventListener('drop', (e) => { if (!drop.contains(e.target)) { e.preventDefault(); addFiles([...e.dataTransfer.files]); } });
+  document.addEventListener('paste', (e) => {
+    const files = [...(e.clipboardData?.items || [])].filter(i => i.kind === 'file' && i.type.startsWith('image/')).map(i => i.getAsFile());
+    if (files.length) addFiles(files);
+  });
+
+  function clearSamples() {
+    for (let i = shots.length - 1; i >= 0; i--) if (shots[i].sample) { shots[i].el.remove(); shots.splice(i, 1); }
+  }
+
+  function addFiles(files) {
+    files = files.filter(f => f && f.type.startsWith('image/'));
+    if (!files.length) return;
+    clearSamples();
+    selectedPage = null;
+    files.forEach(f => {
+      const url = URL.createObjectURL(f);
+      queueShot({ name: f.name || '붙여넣은 이미지', src: url, sample: false });
+    });
+    refreshAll();
+  }
+
+  function addSample() { queueShot({ name: '예시 스크린샷', src: 'sample.png', sample: true }); refreshAll(); }
+
+  // ---------- analysis queue ----------
+  const queue = []; let running = false;
+  const pending = new Map();
+  function queueShot(info) {
+    const s = { id: nextId++, name: info.name, src: info.src, sample: info.sample, status: 'wait', result: null, overrides: new Map(), hint: null, picking: null };
+    s.el = document.createElement('article'); s.el.className = 'shot';
+    $('shots').appendChild(s.el);
+    shots.push(s); renderShot(s);
+    queue.push(s); pump();
+  }
+  async function pump() {
+    if (running) return;
+    const s = queue.shift(); if (!s) return;
+    if (!shots.includes(s)) { pump(); return; }
+    running = true; s.status = 'busy'; renderShot(s); applyVisibility();
+    try {
+      if (!s.img) {
+        const im = await imageDataFrom(s.src);
+        s.img = im; s.full = { w: im.w, h: im.h };
+      }
+      await workerReady;
+      const r = await new Promise((res) => {
+        pending.set(s.id, res);
+        const copy = new Uint8ClampedArray(s.img.data);
+        worker.postMessage({ type: 'analyze', id: s.id, img: { w: s.img.w, h: s.img.h, data: copy }, hint: s.hint }, [copy.buffer]);
+      });
+      if (r.error) { s.status = 'error'; s.error = r.error; }
+      else { s.result = r.r; s.status = r.r.ok ? 'done' : 'bad'; s.overrides.clear(); }
+    } catch (err) { s.status = 'error'; s.error = err.message; }
+    if (s.sample && s.status === 'done') selectedPage = s.result.page;
+    running = false; renderShot(s); refreshAll(); pump();
+  }
+  function onWorkerMessage(e) {
+    if (e.data.type !== 'result') return;
+    const res = pending.get(e.data.id); if (res) { pending.delete(e.data.id); res(e.data); }
+  }
+
+  // ---------- state helpers ----------
+  function cellState(s, k) {
+    if (s.overrides.has(k)) return s.overrides.get(k);
+    return s.result.cells[k].state;
+  }
+  // later screenshots of the same page win
+  function pageOwners() {
+    const owners = new Map();
+    for (const s of shots) if (s.status === 'done' && s.result.page >= 0) owners.set(s.result.page, s);
+    return owners;
+  }
+
+  // ---------- rendering ----------
+  function renderShot(s) {
+    const el = s.el;
+    el.classList.toggle('bad', s.status === 'bad' || s.status === 'error');
+    const owners = pageOwners();
+    let head = '', body = '', note = '', actions = '';
+    const label = s.sample ? '<span class="tag">예시</span>' : '';
+    if (s.status === 'wait' || s.status === 'busy') {
+      head = `<span class="pgno">읽는 중${label}</span><span class="meta">${esc(s.name)}</span>`;
+      body = `<div class="busy"><i class="spin"></i>${s.status === 'wait' ? '차례를 기다리는 중이담메…' : '도감 위치를 찾고 칸을 대조하는 중이담메…'}</div>`;
+    } else if (s.status === 'error') {
+      head = `<span class="pgno">읽지 못함${label}</span><span class="meta">${esc(s.name)}</span>`;
+      note = `<p class="note">이 파일을 처리하지 못했담메. ${esc(s.error || '')}</p>`;
+      actions = `<button class="btn ghost" data-act="remove" type="button">빼기</button>`;
+    } else if (s.status === 'bad') {
+      head = `<span class="pgno">도감을 찾지 못함${label}</span><span class="meta">${esc(s.name)}</span>`;
+      body = `<div class="canvas-box"><canvas></canvas><div class="tip" hidden></div></div>`;
+      note = s.picking
+        ? `<p class="note">${s.picking.length === 0 ? '사진에서 <b>왼쪽 위 첫 칸</b>의 가운데를 눌러달람메.' : '이제 <b>오른쪽 아래 마지막 칸</b>의 가운데를 눌러달람메.'}</p>`
+        : `<p class="note">어류도감 격자를 못 찾았담메. 도감 필터(깔때기)가 켜져 있냠메? 그럼 끄고 다시 찍어 오람메! 필터가 꺼져 있으면 직접 위치를 알려달람메.</p>`;
+      actions = `<button class="btn" data-act="pick" type="button">${s.picking ? '다시 고르기' : '칸 위치 직접 고르기'}</button><button class="btn ghost" data-act="remove" type="button">빼기</button>`;
+    } else if (s.result.page < 0) {
+      // every cell is "?", so nothing tells which page this is; it can't affect the list
+      head = `<span class="pgno">페이지를 알 수 없음${label}</span><span class="meta">낚음 0<br>${esc(s.name)}</span>`;
+      note = `<p class="note">낚은 물고기가 하나도 없어서 몇 페이지인지 모르겠담메. 다른 페이지 결과는 안 건드렸담메. 목록에도 아무 영향 없담메.</p>`;
+      actions = `<button class="btn ghost" data-act="remove" type="button">빼기</button>`;
+    } else {
+      const r = s.result, page = r.page + 1;
+      let caught = 0, unsure = 0, absent = 0;
+      r.cells.forEach((c, k) => {
+        if (c.state === 'none') return;
+        const st = cellState(s, k);
+        if (st === 'caught') { caught++; if (!fish[c.idx][3]) absent++; }
+        if (st === 'unsure') unsure++;
+      });
+      const dup = owners.get(r.page) !== s;
+      head = `<span class="pgno">${page}페이지${label}</span><span class="meta">낚음 ${caught}${unsure ? ` · 확인 필요 ${unsure}` : ''}<br>${esc(s.name)}</span>`;
+      body = `<div class="canvas-box"><canvas></canvas><div class="tip" hidden></div></div>`;
+      const bits = [];
+      if (dup) bits.push('같은 페이지를 나중에 올린 사진이 있어서 이 사진은 목록에 안 쓴담메.');
+      if (unsure) bits.push(`노란 칸 ${unsure}개는 잘 모르겠담메. 눌러서 낚았는지 안 낚았는지 알려달람메!`);
+      else bits.push('칸을 누르면 낚음과 안 낚음을 바꿀 수 있담메.');
+      if (absent) bits.push(`회색 동그라미 ${absent}개는 낚았지만 트래커가 안 다루는 물고기담메.`);
+      note = `<p class="note">${bits.join(' ')}</p>`;
+      actions = s.sample ? '' : `<button class="btn ghost" data-act="remove" type="button">빼기</button>`;
+    }
+    el.innerHTML = `<div class="shot-top">${head}</div>${body}${note}${actions ? `<div class="shot-actions">${actions}</div>` : ''}`;
+    el.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => act(s, b.dataset.act)));
+    const cv = el.querySelector('canvas');
+    if (cv) drawCanvas(s, cv);
+  }
+
+  function act(s, what) {
+    if (what === 'remove') { s.el.remove(); shots.splice(shots.indexOf(s), 1); refreshAll(); }
+    if (what === 'pick') { s.picking = []; renderShot(s); }
+  }
+
+  function drawCanvas(s, cv) {
+    const img = s.img.el, W = s.full.w, H = s.full.h;
+    let view;
+    const g0 = s.result && s.result.ok ? s.result.grid : null;
+    if (g0) {
+      const pad = g0.P * 0.25;
+      view = { x: Math.max(0, g0.x - pad), y: Math.max(0, g0.y - pad) };
+      view.w = Math.min(W - view.x, g0.P * 10 + 2 * pad); view.h = Math.min(H - view.y, g0.P * 10 + 2 * pad);
+    } else view = { x: 0, y: 0, w: W, h: H };
+    const target = Math.min(900, Math.max(view.w, 300));
+    const sc = target / view.w;
+    cv.width = Math.round(view.w * sc); cv.height = Math.round(view.h * sc);
+    const g = cv.getContext('2d');
+    g.drawImage(img, view.x, view.y, view.w, view.h, 0, 0, cv.width, cv.height);
+    s.view = { ...view, sc };
+    const css = getComputedStyle(document.documentElement);
+    const col = { c: css.getPropertyValue('--kelp').trim(), u: css.getPropertyValue('--amber').trim(), x: css.getPropertyValue('--absent').trim() };
+    if (g0) {
+      const P = g0.P * sc;
+      for (let k = 0; k < 100; k++) {
+        const c = s.result.cells[k]; if (c.state === 'none') continue;
+        const st = cellState(s, k);
+        const x = (g0.x - view.x + (k % 10) * g0.P) * sc, y = (g0.y - view.y + Math.floor(k / 10) * g0.P) * sc;
+        if (st === 'empty') { g.fillStyle = 'rgba(8,14,18,0.45)'; g.fillRect(x + 1, y + 1, P - 2, P - 2); continue; }
+        const lw = Math.max(2, P * 0.07);
+        g.lineWidth = lw;
+        if (st === 'caught') {
+          const inTracker = !!fish[c.idx][3];
+          if (!inTracker) { // small hollow ring: caught, but the tracker doesn't list it
+            const r = P * 0.11;
+            g.strokeStyle = col.x; g.lineWidth = Math.max(1.5, P * 0.04);
+            g.beginPath(); g.arc(x + P - r - 4, y + r + 4, r, 0, Math.PI * 2); g.stroke();
+            continue;
+          }
+          g.strokeStyle = col.c;
+          g.strokeRect(x + lw / 2 + 1, y + lw / 2 + 1, P - lw - 2, P - lw - 2);
+          { // check badge
+            const r = P * 0.17;
+            g.fillStyle = col.c; g.beginPath(); g.arc(x + P - r - 2, y + r + 2, r, 0, Math.PI * 2); g.fill();
+            g.strokeStyle = '#fff'; g.lineWidth = Math.max(1.5, r * 0.28); g.beginPath();
+            g.moveTo(x + P - r * 1.55 - 2, y + r + 2); g.lineTo(x + P - r - 2 - r * 0.12, y + r * 1.45 + 2); g.lineTo(x + P - r * 0.45 - 2, y + r * 0.6 + 2); g.stroke();
+          }
+        } else {
+          g.strokeStyle = col.u; g.strokeRect(x + lw / 2 + 1, y + lw / 2 + 1, P - lw - 2, P - lw - 2);
+          g.fillStyle = col.u; g.font = `700 ${Math.round(P * 0.32)}px ${getComputedStyle(document.body).fontFamily}`;
+          g.textAlign = 'right'; g.textBaseline = 'top'; g.fillText('?', x + P - 4, y + 3);
+        }
+      }
+    }
+    if (s.picking) for (const p of s.picking) {
+      g.fillStyle = col.u; g.beginPath(); g.arc((p.x - view.x) * sc, (p.y - view.y) * sc, 6, 0, Math.PI * 2); g.fill();
+    }
+    bindCanvas(s, cv);
+  }
+
+  function cellAt(s, cv, ev) {
+    const rect = cv.getBoundingClientRect();
+    const px = (ev.clientX - rect.left) * (cv.width / rect.width), py = (ev.clientY - rect.top) * (cv.height / rect.height);
+    const ix = s.view.x + px / s.view.sc, iy = s.view.y + py / s.view.sc;
+    const out = { ix, iy, k: -1, rx: ev.clientX - rect.left, ry: ev.clientY - rect.top };
+    if (s.result && s.result.ok) {
+      const g = s.result.grid;
+      const cx = Math.floor((ix - g.x) / g.P), cy = Math.floor((iy - g.y) / g.P);
+      if (cx >= 0 && cx < 10 && cy >= 0 && cy < 10) out.k = cy * 10 + cx;
+    }
+    return out;
+  }
+
+  function bindCanvas(s, cv) {
+    if (cv._bound) return; cv._bound = true;
+    const tip = cv.parentElement.querySelector('.tip');
+    cv.addEventListener('mousemove', (ev) => {
+      const h = cellAt(s, cv, ev);
+      const c = h.k >= 0 ? s.result.cells[h.k] : null;
+      if (!c || c.state === 'none') { tip.hidden = true; return; }
+      const st = cellState(s, h.k);
+      const f = fish[c.idx];
+      tip.textContent = `${f[1]} · ${st === 'caught' ? '낚음' : st === 'empty' ? '안 낚음' : '확인 필요'}${f[3] ? '' : ' · 트래커에 없음'}`;
+      tip.style.left = h.rx + 'px'; tip.style.top = h.ry + 'px'; tip.hidden = false;
+    });
+    cv.addEventListener('mouseleave', () => { tip.hidden = true; });
+    cv.addEventListener('click', (ev) => {
+      const h = cellAt(s, cv, ev);
+      if (s.picking) {
+        s.picking.push({ x: h.ix, y: h.iy });
+        if (s.picking.length === 2) {
+          const [a, b] = s.picking;
+          const P = ((b.x - a.x) + (b.y - a.y)) / 18;
+          if (P > 8) {
+            s.hint = { x: a.x - P / 2, y: a.y - P / 2, P };
+            s.picking = null; s.status = 'wait'; s.result = null;
+            queue.push(s); renderShot(s); pump(); return;
+          }
+          s.picking = [];
+        }
+        renderShot(s); return;
+      }
+      if (h.k < 0) return;
+      const c = s.result.cells[h.k]; if (c.state === 'none') return;
+      const cur = cellState(s, h.k);
+      const next = cur === 'caught' ? 'empty' : 'caught';
+      if (next === c.state) s.overrides.delete(h.k); else s.overrides.set(h.k, next);
+      renderShot(s); refreshAll();
+    });
+  }
+
+  function drawPager() {
+    const pages = Math.max(1, Math.ceil(fish.length / 100)) || TOTAL_PAGES_FALLBACK;
+    const owners = pageOwners();
+    const box = $('pager'); box.innerHTML = '';
+    let have = 0;
+    for (let p = 0; p < pages; p++) {
+      const s = owners.get(p);
+      const d = document.createElement('button');
+      d.type = 'button';
+      d.className = 'pg';
+      d.textContent = p + 1;
+      d.disabled = !s;
+      if (s) {
+        if (selectedPage === p) d.classList.add('sel');
+        d.setAttribute('aria-pressed', selectedPage === p ? 'true' : 'false');
+        d.addEventListener('click', () => { selectedPage = selectedPage === p ? null : p; drawPager(); applyVisibility(); });
+        have++;
+        const unsure = s.result.cells.some((c, k) => c.state !== 'none' && cellState(s, k) === 'unsure');
+        d.classList.add(unsure ? 'warn' : 'have');
+        const n = s.result.cells.filter((c, k) => c.state !== 'none' && cellState(s, k) === 'caught').length;
+        const small = document.createElement('small'); small.textContent = n; d.appendChild(small);
+        d.title = `${p + 1}페이지 · 낚음 ${n}`;
+      } else d.title = `${p + 1}페이지 · 아직 없음`;
+      box.appendChild(d);
+    }
+    const onlySample = shots.length && shots.every(s => s.sample);
+    $('coverText').textContent = have === 0 ? '아직 읽은 페이지가 없담메.'
+      : onlySample ? '지금은 예시 사진 결과담메. 내 스크린샷을 올리면 예시는 사라진담메.'
+      : have === pages ? `${pages}페이지를 모두 읽었담메!`
+      : `${pages}페이지 중 ${have}페이지를 읽었담메. 빠진 페이지에서 낚은 물고기는 목록에 안 들어간담메.`;
+  }
+
+  // ---------- export ----------
+  let mergeIds = [];
+  $('merge').addEventListener('input', () => {
+    const t = $('merge').value.trim();
+    mergeIds = []; let msg = '';
+    if (t) {
+      try {
+        const j = JSON.parse(t);
+        const arr = Array.isArray(j) ? j : Array.isArray(j.completed) ? j.completed : null;
+        if (!arr) throw new Error();
+        mergeIds = arr.map(Number).filter(Number.isFinite);
+        msg = `기존 체크 ${mergeIds.length}개를 합쳤담메.`;
+      } catch { msg = '내용을 못 읽었담메. Export Settings 칸의 내용을 통째로 붙여넣어달람메.'; }
+    }
+    $('mergeInfo').textContent = msg;
+    refreshExport();
+  });
+  document.querySelectorAll('input[name="scope"]').forEach(r => r.addEventListener('change', refreshExport));
+
+  function refreshExport() {
+    const bigOnly = $('scopeBig').checked;
+    const byId = new Map(fish.map(r => [r[0], r]));
+    const ids = new Set();
+    let unsure = 0;
+    for (const [, s] of pageOwners()) {
+      s.result.cells.forEach((c, k) => {
+        if (c.state === 'none') return;
+        const st = cellState(s, k);
+        if (st === 'unsure') unsure++;
+        if (st !== 'caught') return;
+        const f = fish[c.idx];
+        if (!f[3]) return;
+        if (bigOnly && !f[4]) return;
+        ids.add(f[0]);
+      });
+    }
+    let merged = 0;
+    for (const id of mergeIds) {
+      const f = byId.get(id);
+      if (bigOnly && f && !f[4]) continue;
+      if (!ids.has(id)) { ids.add(id); merged++; }
+    }
+    const list = [...ids].sort((a, b) => a - b);
+    $('out').value = list.length ? JSON.stringify(list).replace(/,/g, ', ') : '';
+    $('nAll').textContent = list.length;
+    $('nBig').textContent = list.filter(id => byId.get(id) && byId.get(id)[4]).length;
+    $('copy').disabled = !list.length;
+    const w = $('unsureWarn');
+    w.hidden = !unsure;
+    if (unsure) w.textContent = `확인 필요 칸 ${unsure}개는 목록에서 뺐담메. 노란 칸을 눌러서 정해달람메.`;
+    refreshText();
+  }
+
+  // ---------- plain text list (independent of the tracker import) ----------
+  function refreshText() {
+    const scope = $('tBig').checked ? 'big' : $('tTracker').checked ? 'tracker' : 'all';
+    const owners = pageOwners();
+    const names = [];
+    [...owners.keys()].sort((a, b) => a - b).forEach(p => {
+      const s = owners.get(p);
+      s.result.cells.forEach((c, k) => {
+        if (c.state === 'none' || cellState(s, k) !== 'caught') return;
+        const f = fish[c.idx];
+        if (scope === 'tracker' && !f[3]) return;
+        if (scope === 'big' && !f[4]) return;
+        names.push(f[1]);
+      });
+    });
+    $('txt').value = names.join('\n');
+    $('txtCount').textContent = names.length ? `${names.length}마리` : '';
+    $('copyTxt').disabled = !names.length;
+    $('saveTxt').disabled = !names.length;
+  }
+  document.querySelectorAll('input[name="tscope"]').forEach(r => r.addEventListener('change', refreshText));
+
+  function flashTxt(msg) { $('txtMsg').textContent = msg; clearTimeout(flashTxt.t); flashTxt.t = setTimeout(() => { $('txtMsg').textContent = ''; }, 4000); }
+  $('copyTxt').addEventListener('click', () => {
+    const t = $('txt').value; if (!t) return;
+    const fallback = () => { $('txt').focus(); $('txt').select(); flashTxt('선택해 뒀담메. Ctrl + C로 복사해달람메.'); };
+    try { navigator.clipboard.writeText(t).then(() => flashTxt('복사했담메!'), fallback); } catch { fallback(); }
+  });
+
+  // Inside claude.ai a file is saved through the downloads capability; elsewhere (e.g. GitHub Pages) a plain download link works.
+  let downloads = 'pending';
+  if (window.claude && typeof window.claude.use === 'function') {
+    window.claude.use('downloads').then(d => { downloads = d; if (!d) $('saveTxt').hidden = true; }, () => { downloads = null; $('saveTxt').hidden = true; });
+  } else downloads = 'native';
+  $('saveTxt').addEventListener('click', async () => {
+    const t = $('txt').value; if (!t) return;
+    const filename = '낚은_물고기_목록.txt';
+    if (downloads === 'native') {
+      const url = URL.createObjectURL(new Blob([t], { type: 'text/plain;charset=utf-8' }));
+      const a = document.createElement('a'); a.href = url; a.download = 'caught_fish.txt'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      flashTxt('저장했담메!');
+      return;
+    }
+    if (!downloads || downloads === 'pending') { flashTxt('여기서는 저장이 안 된담메. 텍스트 복사를 써달람메.'); return; }
+    try {
+      await downloads.save({ filename, data: t });
+      flashTxt('저장했담메!');
+    } catch (err) {
+      const code = err && err.code;
+      if (code === 'declined') flashTxt('저장을 취소했담메.');
+      else if (code === 'rate_limited') flashTxt('잠깐 기다렸다가 다시 눌러달람메.');
+      else { flashTxt('여기서는 저장이 안 된담메. 텍스트 복사를 써달람메.'); $('saveTxt').hidden = true; }
+    }
+  });
+
+  $('copy').addEventListener('click', () => {
+    const t = $('out').value; if (!t) return;
+    const done = () => { $('copied').textContent = '복사했담메! 이제 Carbuncle Plushy에 붙여넣으면 끝이담메.'; setTimeout(() => { $('copied').textContent = ''; }, 4000); };
+    const fallback = () => { $('out').focus(); $('out').select(); $('copied').textContent = '선택해 뒀담메. Ctrl + C로 복사해달람메.'; };
+    try { navigator.clipboard.writeText(t).then(done, fallback); } catch { fallback(); }
+  });
+
+  // Failed screenshots always show (they need action); a read page shows only when its button is picked.
+  function applyVisibility() {
+    const owners = pageOwners();
+    let shown = 0, busy = 0;
+    for (const s of shots) {
+      const isBusy = s.status === 'wait' || s.status === 'busy';
+      if (isBusy) busy++;
+      const vis = s.status === 'bad' || s.status === 'error'
+        || (s.status === 'done' && s.result.page < 0)
+        || (s.status === 'done' && selectedPage === s.result.page && owners.get(s.result.page) === s);
+      s.el.hidden = !vis;
+      if (vis) shown++;
+    }
+    $('progress').hidden = !busy;
+    $('progressText').textContent = busy ? `${shots.length - busy}/${shots.length}장 읽는 중이담메…` : '';
+    const hint = $('viewHint');
+    hint.hidden = shown > 0;
+    hint.textContent = !shots.length ? '스크린샷을 올리면 여기에 판독 결과가 나온담메.'
+      : owners.size ? '위의 페이지 번호를 눌러보람메. 그 페이지 사진이랑 판독 결과를 보여준담메. 노란 번호는 확인이 필요한 칸이 있는 페이지담메.'
+      : '스크린샷을 읽는 중이담메…';
+  }
+
+  function refreshAll() {
+    drawPager();
+    applyVisibility();
+    refreshExport();
+    // update duplicate notes
+    const owners = pageOwners();
+    for (const s of shots) if (s.status === 'done' && s.result.page >= 0) {
+      const dup = owners.get(s.result.page) !== s;
+      if (dup !== !!s._dup) { s._dup = dup; renderShot(s); }
+    }
+  }
+
+  function esc(t) { return String(t).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch])); }
+
+  // redraw overlays when the theme flips so colors follow the tokens
+  const mq = matchMedia('(prefers-color-scheme: dark)');
+  const redraw = () => shots.forEach(s => { const cv = s.el.querySelector('canvas'); if (cv) drawCanvas(s, cv); });
+  mq.addEventListener?.('change', redraw);
+  new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  boot().catch(err => { $('dataInfo').textContent = '물고기 데이터를 못 불러왔담메. 페이지를 새로고침해달람메. (' + err.message + ')'; });
+})();
+</script>
+
+</body>
+</html>
