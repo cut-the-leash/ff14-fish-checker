@@ -69,6 +69,11 @@ h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 
 .prep-steps .num { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--lure); color: var(--sheet); display: grid; place-items: center; font-family: var(--mono); font-weight: 500; font-size: 17px; }
 .prep-steps strong { display: block; font-size: 17px; font-weight: 600; margin-bottom: 2px; }
 .prep-steps p { margin: 0; font-size: 14px; color: var(--muted); }
+.prep-warn { margin: 0; font-size: 14px; background: var(--sheet); border-radius: 10px; padding: 10px 16px; }
+.prep-warn b { color: var(--lure); margin-right: 8px; }
+.lede a, .ext { color: var(--lure); font-weight: 500; text-underline-offset: 3px; }
+.rail-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.ext { font-size: 13px; }
 /* Each picture's share of the row equals its aspect ratio, so both come out the same height with no bars. */
 .prep-examples { display: flex; gap: 12px; align-items: flex-start; width: 100%; max-width: 860px; margin-inline: auto; }
 .prep-examples figure { margin: 0; min-width: 0; flex: var(--ar) 1 0; display: flex; flex-direction: column; gap: 6px; }
@@ -180,7 +185,7 @@ footer a { color: inherit; }
   <header>
     <div>
       <h1>으메메한 어류도감 체커</h1>
-      <p class="lede">파이널 판타지 14 어류도감 스크린샷에서 낚은 물고기를 읽어, Fish Tracker에 바로 넣을 수 있는 목록으로 만들어 준담메. 사진은 이 브라우저 안에서만 읽고 어디에도 안 올린담메.</p>
+      <p class="lede">파이널 판타지 14 어류도감 스크린샷에서 낚은 물고기를 읽어, <a href="https://ff14fish.carbuncleplushy.com/" target="_blank" rel="noopener">Fish Tracker</a>에 바로 넣을 수 있는 목록으로 만들어 준담메. 사진은 이 브라우저 안에서만 읽고 어디에도 안 올린담메.</p>
     </div>
   </header>
 
@@ -202,6 +207,7 @@ footer a { color: inherit; }
         </div>
       </li>
     </ol>
+    <p class="prep-warn"><b>이런 건 못 읽는담메</b> 낚은 물고기가 한 마리도 없는 페이지는 몇 페이지인지 알 수 없어서 목록에 못 넣는담메. 작살질로 잡는 물고기(도감 오른쪽 아래 작살 탭)도 못 읽는담메. 낚싯대 탭 도감만 찍어달람메.</p>
     <div class="prep-examples">
       <figure style="--ar: 1.5960">
         <img src="example-crop.jpg" alt="필터를 끈 어류도감 1페이지를 도감 창만 잘라서 찍은 예시" width="640" height="401" loading="lazy">
@@ -248,7 +254,7 @@ footer a { color: inherit; }
     </div>
 
     <aside class="rail" aria-label="내보내기">
-      <h2>Fish Tracker로 보내기</h2>
+      <div class="rail-head"><h2>Fish Tracker로 보내기</h2><a class="ext" href="https://ff14fish.carbuncleplushy.com/" target="_blank" rel="noopener">Fish Tracker 열기 ↗</a></div>
       <div class="tally">
         <div><b id="nAll">0</b><span>넣을 물고기</span></div>
         <div><b id="nBig">0</b><span>그중 터주</span></div>
