@@ -108,14 +108,15 @@ label.btn { display: inline-block; }
 .pager { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
 .coverage { container-type: inline-size; }
 @container (min-width: 620px) { .pager { grid-template-columns: repeat(16, minmax(0, 1fr)); } }
-.pg { aspect-ratio: 1; max-width: 100%; border-radius: 8px; border: 1px solid var(--line); display: grid; place-items: center; font-family: var(--mono); font-size: 13px; color: var(--absent); background: var(--paper); position: relative; }
+/* page number above its catch count, stacked so they never overlap on small buttons */
+.pg { aspect-ratio: 1; max-width: 100%; border-radius: 8px; border: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; line-height: 1; font-family: var(--mono); font-size: 13px; color: var(--absent); background: var(--paper); }
 button.pg { font-family: var(--mono); padding: 0; cursor: pointer; }
 button.pg:disabled { cursor: default; }
 button.pg:not(:disabled):hover { border-color: var(--ink); }
 .pg.sel { outline: 2px solid var(--ink); outline-offset: 1px; font-weight: 600; }
 .pg.have { border-color: var(--kelp); color: var(--ink); background: var(--kelp-soft); }
 .pg.warn { border-color: var(--amber); background: var(--amber-soft); color: var(--ink); }
-.pg small { position: absolute; bottom: 2px; font-size: 10px; color: var(--muted); }
+.pg small { font-size: 9px; color: var(--muted); font-weight: 400; }
 .coverage p { margin: 0; font-size: 13px; color: var(--muted); }
 
 /* main */
