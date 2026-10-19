@@ -78,8 +78,8 @@
 
   // ---------- coarse lattice search ----------
   // Finds a 10x10 grid of square cells by looking for regularly spaced dark gaps.
-  function findLattice(img, maxCandidates, probe) {
-    const f = Math.min(1, 1200 / Math.max(img.w, img.h));
+  // Gray, min-filtered gap maps and their running sums at scale f, plus the lattice score.
+  function latticeMaps(img, f) {
     const w = Math.max(2, Math.floor(img.w * f)), h = Math.max(2, Math.floor(img.h * f));
     // downscaled gray by box sampling
     const G = new Float32Array(w * h);
@@ -127,37 +127,68 @@
       return Math.min(v, hh) / L;
     }
 
-    if (probe) return probe.map(q => score(Math.round(q.x * f), Math.round(q.y * f), q.P * f));
-    const Pmin = Math.max(7, 26 * f), Pmax = Math.min(Math.min(w, h) / 10.2, 130 * f);
+    return { score, w, h, f };
+  }
+
+  // Coarse-to-fine: scan a small copy of the screenshot for grid-like regions,
+  // then re-score only around those regions at a finer scale.
+  function findLattice(img, maxCandidates, probe) {
+    const big = Math.max(img.w, img.h);
+    const fine = latticeMaps(img, Math.min(1, 1200 / big));
+    if (probe) return probe.map(q => fine.score(Math.round(q.x * fine.f), Math.round(q.y * fine.f), q.P * fine.f));
+    const coarse = fine.f > 700 / big ? latticeMaps(img, Math.min(1, 700 / big)) : fine;
+    const { w, h } = coarse, cs = coarse.score;
+    const Pmin = Math.max(7, 26 * coarse.f), Pmax = Math.min(Math.min(w, h) / 10.2, 130 * coarse.f);
+    // At the coarse scale keep several pitches per region: the right one may only win after refining.
+    const keep = maxCandidates * 4;
     const best = [];
     const push = (s, x, y, P) => {
-      // one candidate per region, whatever its pitch, so a busy HUD can't crowd out the guide
-      for (const b of best) if (Math.abs(b.x + 5 * b.P - x - 5 * P) < 5 * Math.max(P, b.P) && Math.abs(b.y + 5 * b.P - y - 5 * P) < 5 * Math.max(P, b.P)) {
+      for (const b of best) if (Math.abs(b.x - x) < P * 0.6 && Math.abs(b.y - y) < P * 0.6 && Math.abs(b.P - P) < P * 0.06) {
         if (s > b.s) { b.s = s; b.x = x; b.y = y; b.P = P; } return;
       }
-      best.push({ s, x, y, P }); best.sort((a, b) => b.s - a.s); if (best.length > maxCandidates) best.pop();
+      best.push({ s, x, y, P }); best.sort((a, b) => b.s - a.s); if (best.length > keep) best.pop();
     };
-    for (let P = Pmin; P <= Pmax; P *= 1.015) {
+    for (let P = Pmin; P <= Pmax; P *= 1.02) {
       const L = Math.round(10 * P);
       for (let y = 1; y + L < h - 1; y += 2) for (let x = 1; x + L < w - 1; x += 2) {
-        const s = score(x, y, P);
-        if (best.length < maxCandidates || s > best[best.length - 1].s) push(s, x, y, P);
+        const sc = cs(x, y, P);
+        if (best.length < keep || sc > best[best.length - 1].s) push(sc, x, y, P);
       }
     }
-    // local polish at working scale
-    for (const b of best) {
+    // refine each region at the fine scale
+    const k = fine.f / coarse.f, R = Math.ceil(2.5 * k) + 1;
+    const out = best.map(b => {
+      const cx = Math.round(b.x * k), cy = Math.round(b.y * k), cP = b.P * k;
+      let r = { s: -1e18, x: cx, y: cy, P: cP };
+      for (let dp = -0.04; dp <= 0.0401; dp += 0.01) {
+        const P = cP * (1 + dp);
+        for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
+          const sc = fine.score(cx + dx, cy + dy, P);
+          if (sc > r.s) r = { s: sc, x: cx + dx, y: cy + dy, P };
+        }
+      }
       let improved = true;
       while (improved) {
         improved = false;
-        for (const [dx, dy, dp] of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,0.01],[0,0,-0.01]]) {
-          const nx = b.x + dx, ny = b.y + dy, nP = b.P * (1 + dp);
-          const s = score(nx, ny, nP);
-          if (s > b.s + 1e-6) { b.s = s; b.x = nx; b.y = ny; b.P = nP; improved = true; }
+        for (const [dx, dy, dq] of [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,0.004],[0,0,-0.004]]) {
+          const nx = r.x + dx, ny = r.y + dy, nP = r.P * (1 + dq);
+          const sc = fine.score(nx, ny, nP);
+          if (sc > r.s + 1e-6) { r = { s: sc, x: nx, y: ny, P: nP }; improved = true; }
         }
       }
+      return r;
+    });
+    out.sort((a, b) => b.s - a.s);
+    // one candidate per region, whatever its pitch, so a busy HUD can't crowd out the guide
+    const picked = [];
+    for (const r of out) {
+      if (picked.some(b => Math.abs(b.x + 5 * b.P - r.x - 5 * r.P) < 5 * Math.max(r.P, b.P) && Math.abs(b.y + 5 * b.P - r.y - 5 * r.P) < 5 * Math.max(r.P, b.P))) continue;
+      picked.push(r);
+      if (picked.length >= maxCandidates) break;
     }
-    return best.map(b => ({ x: b.x / f, y: b.y / f, P: b.P / f, s: b.s }));
+    return picked.map(b => ({ x: b.x / fine.f, y: b.y / fine.f, P: b.P / fine.f, s: b.s }));
   }
+
 
   // ---------- fine fit against reference icons ----------
   const CLIP = 40;
@@ -240,7 +271,13 @@
   }
 
   // The coarse lattice can land one or two cells off; try whole-cell shifts.
-  function shiftCandidates(img, refs, fishIcons, c, keep) {
+  function nudgeCandidates(img, refs, fishIcons, c) {
+    const offs = [];
+    for (const dy of [-0.1, 0, 0.1]) for (const dx of [-0.1, 0, 0.1]) if (dx || dy) offs.push([dx, dy]);
+    return shiftCandidates(img, refs, fishIcons, c, 8, offs);
+  }
+
+  function shiftCandidates(img, refs, fishIcons, c, keep, offsets) {
     const pad = c.P * 3.5;
     const ii = integral(img, c.x - pad, c.y - pad, c.P * 10 + 2 * pad, c.P * 10 + 2 * pad);
     const out = [];
@@ -248,7 +285,8 @@
     const sub = [];
     for (let k = 0; k < 100; k += 3) sub.push(k);
     const s = c.P * 0.997;
-    for (let sy = -2; sy <= 2; sy++) for (let sx = -2; sx <= 2; sx++) {
+    if (!offsets) { offsets = []; for (let sy = -2; sy <= 2; sy++) for (let sx = -2; sx <= 2; sx++) offsets.push([sx, sy]); }
+    for (const [sx, sy] of offsets) {
       const g = { x: c.x + sx * c.P, y: c.y + sy * c.P, P: c.P };
       if (g.x < -c.P * 0.2 || g.y < -c.P * 0.2 || g.x + 10 * g.P > img.w + c.P * 0.2 || g.y + 10 * g.P > img.h + c.P * 0.2) continue;
       const feats = sub.map(k => feature(ii, g.x + (k % 10) * g.P, g.y + Math.floor(k / 10) * g.P, s, FBC));
@@ -316,13 +354,40 @@
   }
 
   // Full pipeline for one screenshot. hint: optional {x,y,P} from manual clicks.
-  function analyze(img, refs, fishIcons, hint) {
+  // Surround the screenshot with a dark border so a grid cropped right to its edges
+  // still has room around it for the search. Results are shifted back afterwards.
+  function padImage(img, pad) {
+    const w = img.w + 2 * pad, h = img.h + 2 * pad;
+    const data = new Uint8ClampedArray(w * h * 4);
+    for (let i = 0; i < data.length; i += 4) { data[i] = 24; data[i + 1] = 26; data[i + 2] = 28; data[i + 3] = 255; }
+    for (let y = 0; y < img.h; y++) {
+      data.set(img.data.subarray(y * img.w * 4, (y + 1) * img.w * 4), ((y + pad) * w + pad) * 4);
+    }
+    return { w, h, data };
+  }
+
+  function analyze(img0, refs, fishIcons, hint0) {
+    const pad = Math.round(Math.max(img0.w, img0.h) * 0.06) + 8;
+    const img = padImage(img0, pad);
+    const hint = hint0 ? { x: hint0.x + pad, y: hint0.y + pad, P: hint0.P } : null;
+    const r = analyzePadded(img, refs, fishIcons, hint);
+    if (r.grid) r.grid = { x: r.grid.x - pad, y: r.grid.y - pad, P: r.grid.P };
+    return r;
+  }
+
+  function analyzePadded(img, refs, fishIcons, hint) {
     const lat = hint ? [hint] : findLattice(img, 10);
     let cands = [];
     for (const c of lat) {
       cands = cands.concat(shiftCandidates(img, refs, fishIcons, c, 2));
       cands = cands.concat(shiftCandidates(img, refs, fishIcons, snapToGaps(img, c), 2));
     }
+    cands.sort((a, b) => a.cost - b.cost);
+    // The darkest line can be a cell's own frame rather than the gap, so nudge the
+    // most promising placements by a tenth of a cell before the fine fit.
+    let nudged = [];
+    for (const c of cands.slice(0, 4)) nudged = nudged.concat(nudgeCandidates(img, refs, fishIcons, c.g));
+    cands = cands.concat(nudged);
     cands.sort((a, b) => a.cost - b.cost);
     let best = null;
     for (const c of cands.slice(0, 3)) {
