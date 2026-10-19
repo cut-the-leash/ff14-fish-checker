@@ -69,6 +69,10 @@ h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 
 .prep-steps .num { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--lure); color: var(--sheet); display: grid; place-items: center; font-family: var(--mono); font-weight: 500; font-size: 17px; }
 .prep-steps strong { display: block; font-size: 17px; font-weight: 600; margin-bottom: 2px; }
 .prep-steps p { margin: 0; font-size: 14px; color: var(--muted); }
+.prep-examples { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.prep-examples figure { margin: 0; background: var(--sheet); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.prep-examples img { display: block; width: 100%; height: 180px; object-fit: contain; background: #0b1114; border-radius: 6px; }
+.prep-examples figcaption { font-size: 13px; color: var(--muted); text-align: center; }
 
 /* intake */
 .intake { display: flex; justify-content: center; }
@@ -167,7 +171,8 @@ footer a { color: inherit; }
 
 @media (max-width: 880px) {
   .bench { grid-template-columns: 1fr; }
-  .prep-steps { grid-template-columns: 1fr; }
+  .prep-steps, .prep-examples { grid-template-columns: 1fr; }
+  .prep-examples img { height: 150px; }
 }
 </style>
 
@@ -197,6 +202,16 @@ footer a { color: inherit; }
         </div>
       </li>
     </ol>
+    <div class="prep-examples">
+      <figure>
+        <img src="example-crop.jpg" alt="필터를 끈 어류도감 1페이지를 도감 창만 잘라서 찍은 예시" width="640" height="401" loading="lazy">
+        <figcaption>예시 1 · 도감 창만 자른 사진</figcaption>
+      </figure>
+      <figure>
+        <img src="example-full.jpg" alt="필터를 끈 어류도감 2페이지가 보이는 게임 전체 화면 예시" width="900" height="377" loading="lazy">
+        <figcaption>예시 2 · 게임 전체 화면</figcaption>
+      </figure>
+    </div>
   </section>
 
   <section class="intake">
