@@ -123,6 +123,8 @@ button.pg:not(:disabled):hover { border-color: var(--ink); }
 /* Number size follows the button size: 8 per row on narrow boxes, 16 per row on wide ones. */
 @container (min-width: 620px) { .pager { grid-template-columns: repeat(16, minmax(0, 1fr)); } .pg { font-size: clamp(12px, 1.9cqi, 17px); } }
 .coverage p { margin: 0; font-size: 13px; color: var(--muted); }
+.cover-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.cover-foot .btn { font-size: 12px; padding: 5px 10px; }
 
 /* main */
 .bench { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
@@ -248,6 +250,10 @@ footer a { color: inherit; }
         <h2>읽은 페이지 · 눌러서 보기</h2>
         <div class="pager" id="pager"></div>
         <p id="coverText">아직 읽은 페이지가 없담메.</p>
+        <div class="cover-foot" id="coverFoot" hidden>
+          <span id="savedInfo">결과는 이 브라우저에 저장돼서 새로고침해도 남는담메.</span>
+          <button class="btn ghost" id="clearAll" type="button">결과 모두 지우기</button>
+        </div>
       </div>
       <div>
       <div class="shots-head">
@@ -335,6 +341,48 @@ footer a { color: inherit; }
   const shots = [];          // {id, name, sample, status, result, overrides, preview, scale, el}
   let nextId = 1;
   let selectedPage = null;   // only this page's screenshot is shown
+  let seqCounter = 0;
+
+  // ---------- saved results (IndexedDB, in this browser only) ----------
+  // Each uploaded screenshot is kept with its result and hand fixes, so a reload brings everything back.
+  const store = (() => {
+    let dbp = null;
+    const open = () => dbp || (dbp = new Promise((res, rej) => {
+      try {
+        const rq = indexedDB.open('fish-checker', 1);
+        rq.onupgradeneeded = () => { const db = rq.result; db.createObjectStore('shots', { keyPath: 'key' }); db.createObjectStore('ui'); };
+        rq.onsuccess = () => res(rq.result);
+        rq.onerror = () => rej(rq.error);
+      } catch (e) { rej(e); }
+    }));
+    const run = async (name, mode, fn) => {
+      const db = await open();
+      return new Promise((res, rej) => {
+        const t = db.transaction(name, mode);
+        const r = fn(t.objectStore(name));
+        t.oncomplete = () => res(r ? r.result : undefined);
+        t.onerror = () => rej(t.error);
+        t.onabort = () => rej(t.error);
+      });
+    };
+    return {
+      put: (rec) => run('shots', 'readwrite', st => st.put(rec)).catch(() => {}),
+      del: (key) => run('shots', 'readwrite', st => st.delete(key)).catch(() => {}),
+      all: () => run('shots', 'readonly', st => st.getAll()).catch(() => []),
+      clear: () => run('shots', 'readwrite', st => st.clear()).catch(() => {}),
+      setUi: (v) => run('ui', 'readwrite', st => st.put(v, 'ui')).catch(() => {}),
+      getUi: () => run('ui', 'readonly', st => st.get('ui')).catch(() => null),
+    };
+  })();
+  function saveShot(s) {
+    if (s.sample || !s.blob) return;
+    store.put({
+      key: s.key, seq: s.seq, name: s.name, blob: s.blob,
+      status: (s.status === 'busy' || s.status === 'wait') ? 'wait' : s.status,
+      result: s.result, overrides: [...s.overrides], hint: s.hint, error: s.error || null,
+    });
+  }
+  function saveUi() { store.setUi({ merge: $('merge').value, scope: $('scopeBig').checked ? 'big' : 'all' }); }
 
   // ---------- data ----------
   function imageDataFrom(src) {
@@ -373,7 +421,16 @@ footer a { color: inherit; }
     }
     workerReady = Promise.all(readies);
     await workerReady;
-    addSample();
+    const ui = await store.getUi();
+    if (ui) {
+      if (ui.merge) { $('merge').value = ui.merge; $('merge').dispatchEvent(new Event('input')); }
+      if (ui.scope === 'big') $('scopeBig').checked = true;
+    }
+    const saved = (await store.all()).sort((a, b) => a.seq - b.seq);
+    if (saved.length) {
+      saved.forEach(rec => queueShot({ name: rec.name, src: URL.createObjectURL(rec.blob), blob: rec.blob, sample: false, saved: rec }));
+      refreshAll();
+    } else addSample();
   }
 
   // ---------- intake ----------
@@ -404,7 +461,7 @@ footer a { color: inherit; }
     selectedPage = null;
     files.forEach(f => {
       const url = URL.createObjectURL(f);
-      queueShot({ name: f.name || '붙여넣은 이미지', src: url, sample: false });
+      queueShot({ name: f.name || '붙여넣은 이미지', src: url, blob: f, sample: false });
     });
     refreshAll();
   }
@@ -415,10 +472,24 @@ footer a { color: inherit; }
   const queue = [];
   const pending = new Map();
   function queueShot(info) {
-    const s = { id: nextId++, name: info.name, src: info.src, sample: info.sample, status: 'wait', result: null, overrides: new Map(), hint: null, picking: null };
+    const rec = info.saved;
+    const s = { id: nextId++, name: info.name, src: info.src, sample: info.sample, blob: info.blob || null,
+      key: rec ? rec.key : Date.now().toString(36) + Math.random().toString(36).slice(2),
+      seq: rec ? rec.seq : Date.now() * 1000 + (seqCounter++ % 1000),
+      status: 'wait', result: null, overrides: new Map(), hint: rec ? rec.hint : null, picking: null };
     s.el = document.createElement('article'); s.el.className = 'shot';
     $('shots').appendChild(s.el);
-    shots.push(s); renderShot(s);
+    shots.push(s);
+    if (rec && (rec.status === 'done' || rec.status === 'bad' || rec.status === 'error')) {
+      // restored: no need to read it again, just load the picture for the overlay
+      s.status = rec.status; s.result = rec.result; s.error = rec.error;
+      s.overrides = new Map(rec.overrides || []);
+      imageDataFrom(s.src).then(im => { s.img = im; s.full = { w: im.w, h: im.h }; renderShot(s); }).catch(() => {});
+      renderShot(s);
+      return;
+    }
+    renderShot(s);
+    saveShot(s);
     queue.push(s); pump();
   }
   function pump() {
@@ -450,6 +521,7 @@ footer a { color: inherit; }
     } catch (err) { s.status = 'error'; s.error = err.message; }
     if (s.sample && s.status === 'done') selectedPage = s.result.page;
     if (!shots.includes(s)) return;
+    saveShot(s);
     renderShot(s); refreshAll();
   }
   function onWorkerMessage(e) {
@@ -518,11 +590,11 @@ footer a { color: inherit; }
     el.innerHTML = `<div class="shot-top">${head}</div>${body}${note}${actions ? `<div class="shot-actions">${actions}</div>` : ''}`;
     el.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => act(s, b.dataset.act)));
     const cv = el.querySelector('canvas');
-    if (cv) drawCanvas(s, cv);
+    if (cv && s.img) drawCanvas(s, cv);
   }
 
   function act(s, what) {
-    if (what === 'remove') { s.el.remove(); shots.splice(shots.indexOf(s), 1); refreshAll(); }
+    if (what === 'remove') { s.el.remove(); shots.splice(shots.indexOf(s), 1); store.del(s.key); refreshAll(); }
     if (what === 'pick') { s.picking = []; renderShot(s); }
   }
 
@@ -617,6 +689,7 @@ footer a { color: inherit; }
           if (P > 8) {
             s.hint = { x: a.x - P / 2, y: a.y - P / 2, P };
             s.picking = null; s.status = 'wait'; s.result = null;
+            saveShot(s);
             queue.push(s); renderShot(s); pump(); return;
           }
           s.picking = [];
@@ -628,6 +701,7 @@ footer a { color: inherit; }
       const cur = cellState(s, h.k);
       const next = cur === 'caught' ? 'empty' : 'caught';
       if (next === c.state) s.overrides.delete(h.k); else s.overrides.set(h.k, next);
+      saveShot(s);
       renderShot(s); refreshAll();
     });
   }
@@ -662,7 +736,25 @@ footer a { color: inherit; }
       : onlySample ? '지금은 예시 사진 결과담메. 내 스크린샷을 올리면 예시는 사라진담메.'
       : have === pages ? `${pages}페이지를 모두 읽었담메!`
       : `${pages}페이지 중 ${have}페이지를 읽었담메. 빠진 페이지에서 낚은 물고기는 목록에 안 들어간담메.`;
+    $('coverFoot').hidden = !shots.some(x => !x.sample);
   }
+
+  // Two presses to clear, since the page can't show a confirm dialog.
+  let clearArmed = null;
+  $('clearAll').addEventListener('click', async () => {
+    const b = $('clearAll');
+    if (!clearArmed) {
+      b.textContent = '한 번 더 누르면 다 지운담메';
+      clearArmed = setTimeout(() => { clearArmed = null; b.textContent = '결과 모두 지우기'; }, 4000);
+      return;
+    }
+    clearTimeout(clearArmed); clearArmed = null; b.textContent = '결과 모두 지우기';
+    await store.clear();
+    queue.length = 0;
+    shots.splice(0).forEach(x => x.el.remove());
+    selectedPage = null;
+    addSample();
+  });
 
   // ---------- export ----------
   let mergeIds = [];
@@ -681,7 +773,8 @@ footer a { color: inherit; }
     $('mergeInfo').textContent = msg;
     refreshExport();
   });
-  document.querySelectorAll('input[name="scope"]').forEach(r => r.addEventListener('change', refreshExport));
+  document.querySelectorAll('input[name="scope"]').forEach(r => r.addEventListener('change', () => { refreshExport(); saveUi(); }));
+  $('merge').addEventListener('change', saveUi);
 
   function refreshExport() {
     const bigOnly = $('scopeBig').checked;
@@ -827,7 +920,7 @@ function checkSepiSheet() {
 
   // redraw overlays when the theme flips so colors follow the tokens
   const mq = matchMedia('(prefers-color-scheme: dark)');
-  const redraw = () => shots.forEach(s => { const cv = s.el.querySelector('canvas'); if (cv) drawCanvas(s, cv); });
+  const redraw = () => shots.forEach(s => { const cv = s.el.querySelector('canvas'); if (cv && s.img) drawCanvas(s, cv); });
   mq.addEventListener?.('change', redraw);
   new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
