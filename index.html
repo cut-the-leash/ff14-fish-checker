@@ -74,6 +74,8 @@ h1 .logo { height: 1.5em; width: auto; flex: none; }
 .prep-steps .num { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--lure); color: var(--sheet); display: grid; place-items: center; font-family: var(--mono); font-weight: 500; font-size: 17px; }
 .prep-steps strong { display: block; font-size: 17px; font-weight: 600; margin-bottom: 2px; }
 .prep-steps p { margin: 0; font-size: 14px; color: var(--muted); }
+/* Multi-line Korean paragraphs: justify so every full line ends at the same right edge. */
+.lede, .prep-steps p, .prep-warn, .coverage p, .shot .note, .subnote, .howto li, .warnbox, footer span { text-align: justify; }
 .prep-warn { margin: 0; font-size: 14px; background: var(--sheet); border-radius: 10px; padding: 14px var(--pad-card); }
 .prep-warn b { color: var(--lure); margin-right: 8px; }
 .lede a, .ext { color: var(--lure); font-weight: 500; text-underline-offset: 3px; }
@@ -83,7 +85,7 @@ h1 .logo { height: 1.5em; width: auto; flex: none; }
 .prep-examples { display: flex; gap: 12px; align-items: flex-start; width: 100%; max-width: 860px; margin-inline: auto; }
 .prep-examples figure { margin: 0; min-width: 0; flex: var(--ar) 1 0; display: flex; flex-direction: column; gap: 6px; }
 .prep-examples img { display: block; width: 100%; height: auto; aspect-ratio: var(--ar); border-radius: 8px; }
-.prep-examples figcaption { font-size: 13px; color: var(--muted); text-align: center; }
+.prep-examples figcaption { font-size: 13px; color: var(--muted); text-align: center; word-break: keep-all; }
 
 /* intake */
 .intake { display: flex; justify-content: center; }
