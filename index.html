@@ -178,9 +178,9 @@ textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; backg
 .copied { font-size: 13px; color: var(--kelp); }
 .howto { margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
 .subsec { border-top: 1px solid var(--line); padding-top: 16px; display: flex; flex-direction: column; gap: 12px; }
+.seg3 { grid-template-columns: repeat(3, 1fr); }
 .subnote { margin: 0; font-size: 13px; color: var(--muted); }
-#sepi { min-height: 180px; margin-top: 8px; }
-.peek summary { font-size: 13px; color: var(--muted); cursor: pointer; }
+#txt { min-height: 150px; font-family: var(--body); font-size: 13px; }
 .warnbox { font-size: 13px; background: var(--amber-soft); border-radius: 8px; padding: 10px 14px; margin: 0; }
 .warnbox b { margin-right: 4px; }
 
@@ -299,25 +299,22 @@ footer a { color: inherit; }
         <li>Load를 누르면 체크가 반영된담메. 기존 체크는 이 목록으로 바뀐담메. 남기고 싶으면 위 합치기 칸을 써달람메.</li>
       </ol>
       <div class="subsec">
-        <h2>세피시트로 보내기</h2>
-        <p class="subnote">세피시트 사본에 낚은 터주를 체크해 주는 스크립트를 만들어 준담메. 구글 시트 Apps Script는 PC에서만 열린담메.</p>
-        <p class="warnbox"><b>꼭 새 사본에서 먼저 해달람메!</b> 원래 쓰던 시트에 바로 돌렸다가 뭔가 꼬이면 되돌리기 어렵담메. 세피시트에서 파일 → 사본 만들기로 새 사본을 하나 만들고, 거기서 먼저 돌려 보고 결과를 확인해달람메.</p>
-        <ol class="howto">
-          <li>아래 버튼으로 스크립트를 복사해달람메.</li>
-          <li>새로 만든 세피시트 사본에서 확장 프로그램 → Apps Script를 열어달람메.</li>
-          <li>원래 있던 내용을 지우고 붙여넣은 뒤, 저장하고 실행을 눌러달람메.</li>
-          <li>처음 한 번은 권한을 묻는담메. 고급 → (안전하지 않음)으로 이동 → 허용을 눌러달람메. 개인이 만든 스크립트라 뜨는 정상 경고담메.</li>
-          <li>시트로 돌아가면 체크돼 있담메. 이미 체크한 칸은 그대로 두고, 체크를 끄지는 않는담메.</li>
-        </ol>
-        <div class="copyrow">
-          <button class="btn" id="copySepi" type="button">스크립트 복사</button>
-          <span class="copied" id="sepiMsg" aria-live="polite"></span>
+        <h2>텍스트 목록</h2>
+        <p class="subnote">스크린샷에서 읽은 물고기 이름을 도감 순서대로 한 줄씩 적었담메. 메모장이나 엑셀에 붙여넣어서 써달람메.</p>
+        <div class="seg seg3" role="radiogroup" aria-label="텍스트 목록에 넣을 물고기">
+          <label><input type="radio" name="tscope" id="tAll" value="all" checked><span>낚은 전체</span></label>
+          <label><input type="radio" name="tscope" id="tTracker" value="tracker"><span>트래커만</span></label>
+          <label><input type="radio" name="tscope" id="tBig" value="big"><span>터주만</span></label>
         </div>
-        <p class="subnote" id="sepiInfo"></p>
-        <details class="peek">
-          <summary>스크립트 내용 보기</summary>
-          <textarea id="sepi" readonly aria-label="세피시트 체크 스크립트"></textarea>
-        </details>
+        <div class="field">
+          <label for="txt">물고기 이름 <span id="txtCount" style="font-weight:400;color:var(--muted)"></span></label>
+          <textarea id="txt" readonly></textarea>
+        </div>
+        <div class="copyrow">
+          <button class="btn" id="copyTxt" type="button">텍스트 복사</button>
+          <button class="btn ghost" id="saveTxt" type="button">txt로 저장</button>
+          <span class="copied" id="txtMsg" aria-live="polite"></span>
+        </div>
       </div>
     </aside>
   </section>
@@ -807,72 +804,63 @@ footer a { color: inherit; }
     const w = $('unsureWarn');
     w.hidden = !unsure;
     if (unsure) w.textContent = `확인 필요 칸 ${unsure}개는 목록에서 뺐담메. 노란 칸을 눌러서 정해달람메.`;
-    refreshSepi();
+    refreshText();
   }
 
-  // ---------- Sepi sheet script ----------
-  // Builds a Google Apps Script that ticks column B wherever column C holds a caught fish's name.
-  function caughtNames() {
+  // ---------- plain text list (independent of the tracker import) ----------
+  function refreshText() {
+    const scope = $('tBig').checked ? 'big' : $('tTracker').checked ? 'tracker' : 'all';
     const owners = pageOwners();
     const names = [];
     [...owners.keys()].sort((a, b) => a - b).forEach(p => {
       const s = owners.get(p);
       s.result.cells.forEach((c, k) => {
-        if (c.state !== 'none' && cellState(s, k) === 'caught') names.push(fish[c.idx][1]);
+        if (c.state === 'none' || cellState(s, k) !== 'caught') return;
+        const f = fish[c.idx];
+        if (scope === 'tracker' && !f[3]) return;
+        if (scope === 'big' && !f[4]) return;
+        names.push(f[1]);
       });
     });
-    return names;
+    $('txt').value = names.join('\n');
+    $('txtCount').textContent = names.length ? `${names.length}마리` : '';
+    $('copyTxt').disabled = !names.length;
+    $('saveTxt').disabled = !names.length;
   }
-  function sepiScript(names) {
-    const d = new Date(), stamp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    return `/**
- * 으메메한 어류도감 체커 → 세피시트 체크 스크립트 (${stamp})
- * 이 시트의 각 탭에서, B열 체크박스 옆 C열의 물고기 이름이 아래 목록에 있으면 체크합니다.
- * 이미 체크된 칸은 그대로 두고, 체크를 끄지는 않습니다. 시트 밖으로 아무것도 보내지 않습니다.
- */
-function checkSepiSheet() {
-  const CAUGHT = ${JSON.stringify(names)};
-  const norm = (s) => String(s).replace(/[\\s?·.\\-]/g, '');
-  const want = new Set(CAUGHT.map(norm));
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let newly = 0, already = 0;
-  const perTab = [];
-  for (const sh of ss.getSheets()) {
-    const last = sh.getLastRow();
-    if (last < 1) continue;
-    const rows = sh.getRange(1, 2, last, 2).getValues();
-    let n = 0;
-    rows.forEach((row, i) => {
-      if (typeof row[0] !== 'boolean') return;   // B열이 체크박스인 줄만
-      if (!want.has(norm(row[1]))) return;       // C열 이름이 낚은 목록에 있을 때만
-      if (row[0]) { already++; return; }
-      sh.getRange(i + 1, 2).setValue(true);
-      n++;
-    });
-    if (n) perTab.push(sh.getName() + ' ' + n + '마리');
-    newly += n;
-  }
-  const msg = '새로 체크: ' + newly + '마리' + (perTab.length ? ' (' + perTab.join(', ') + ')' : '') +
-    ' / 이미 체크돼 있던 것: ' + already + '마리';
-  console.log(msg);
-  ss.toast(msg, '세피시트 체크 완료', 20);
-}
-`;
-  }
-  function refreshSepi() {
-    const names = caughtNames();
-    const big = names.filter(n => { const f = fish.find(r => r[1] === n); return f && f[4]; }).length;
-    $('sepi').value = names.length ? sepiScript(names) : '';
-    $('copySepi').disabled = !names.length;
-    $('sepiInfo').textContent = names.length
-      ? `지금 읽은 물고기 ${names.length}마리를 담았담메(그중 트래커 기준 터주 ${big}마리). 세피시트에 있는 이름만 체크된담메.`
-      : '스크린샷을 읽으면 스크립트가 만들어진담메.';
-  }
-  function flashSepi(msg) { $('sepiMsg').textContent = msg; clearTimeout(flashSepi.t); flashSepi.t = setTimeout(() => { $('sepiMsg').textContent = ''; }, 5000); }
-  $('copySepi').addEventListener('click', () => {
-    const t = $('sepi').value; if (!t) return;
-    const fallback = () => { document.querySelector('.peek').open = true; $('sepi').focus(); $('sepi').select(); flashSepi('선택해 뒀담메. Ctrl + C로 복사해달람메.'); };
-    try { navigator.clipboard.writeText(t).then(() => flashSepi('복사했담메! Apps Script에 붙여넣어달람메.'), fallback); } catch { fallback(); }
+  document.querySelectorAll('input[name="tscope"]').forEach(r => r.addEventListener('change', refreshText));
+
+  function flashTxt(msg) { $('txtMsg').textContent = msg; clearTimeout(flashTxt.t); flashTxt.t = setTimeout(() => { $('txtMsg').textContent = ''; }, 4000); }
+  $('copyTxt').addEventListener('click', () => {
+    const t = $('txt').value; if (!t) return;
+    const fallback = () => { $('txt').focus(); $('txt').select(); flashTxt('선택해 뒀담메. Ctrl + C로 복사해달람메.'); };
+    try { navigator.clipboard.writeText(t).then(() => flashTxt('복사했담메!'), fallback); } catch { fallback(); }
+  });
+
+  // Inside claude.ai a file is saved through the downloads capability; elsewhere (e.g. GitHub Pages) a plain download link works.
+  let downloads = 'pending';
+  if (window.claude && typeof window.claude.use === 'function') {
+    window.claude.use('downloads').then(d => { downloads = d; if (!d) $('saveTxt').hidden = true; }, () => { downloads = null; $('saveTxt').hidden = true; });
+  } else downloads = 'native';
+  $('saveTxt').addEventListener('click', async () => {
+    const t = $('txt').value; if (!t) return;
+    const filename = '낚은_물고기_목록.txt';
+    if (downloads === 'native') {
+      const url = URL.createObjectURL(new Blob([t], { type: 'text/plain;charset=utf-8' }));
+      const a = document.createElement('a'); a.href = url; a.download = 'caught_fish.txt'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      flashTxt('저장했담메!');
+      return;
+    }
+    if (!downloads || downloads === 'pending') { flashTxt('여기서는 저장이 안 된담메. 텍스트 복사를 써달람메.'); return; }
+    try {
+      await downloads.save({ filename, data: t });
+      flashTxt('저장했담메!');
+    } catch (err) {
+      const code = err && err.code;
+      if (code === 'declined') flashTxt('저장을 취소했담메.');
+      else if (code === 'rate_limited') flashTxt('잠깐 기다렸다가 다시 눌러달람메.');
+      else { flashTxt('여기서는 저장이 안 된담메. 텍스트 복사를 써달람메.'); $('saveTxt').hidden = true; }
+    }
   });
 
   $('copy').addEventListener('click', () => {
