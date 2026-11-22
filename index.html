@@ -215,8 +215,15 @@ textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; backg
 .fishes { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .fishes li { font-size: 13px; padding: 3px 9px; border-radius: 999px; background: var(--paper); border: 1px solid var(--line); display: inline-flex; gap: 5px; align-items: center; word-break: keep-all; }
 .fishes li.dim { opacity: .5; }
-.fishes li { cursor: pointer; touch-action: manipulation; user-select: none; }
-.fishes li:hover { border-color: var(--kelp); }
+.stop.editing { border-color: var(--kelp); box-shadow: inset 0 0 0 1px var(--kelp); }
+.stop.editing .fishes li { cursor: pointer; touch-action: manipulation; user-select: none; padding-left: 6px; }
+.stop.editing .fishes li::before { content: ''; width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--muted); background: var(--sheet); flex: none; }
+.stop.editing .fishes li[aria-checked="true"] { background: var(--kelp-soft); border-color: var(--kelp); }
+.stop.editing .fishes li[aria-checked="true"]::before { background: var(--kelp); border-color: var(--kelp); box-shadow: inset 0 0 0 2px var(--sheet); }
+.stop.editing .fishes li:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.stop-foot { display: flex; gap: 8px; justify-content: flex-end; align-items: center; flex-wrap: wrap; margin-top: auto; }
+.stop-foot .hint { margin-right: auto; font-size: 12px; color: var(--muted); }
+.stop-foot .btn { padding: 6px 12px; font-size: 13px; }
 .plan-undo { margin: -6px 0 0; font-size: 13px; color: var(--kelp); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .plan-undo button { font: inherit; font-size: 12px; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--sheet); cursor: pointer; color: var(--ink); }
 .tagc { font-size: 10px; font-weight: 600; padding: 0 5px; border-radius: 4px; line-height: 16px; }
@@ -383,7 +390,7 @@ footer a { color: inherit; }
     <div class="plan-head">
       <div>
         <h2 id="planTitle">어디부터 낚으러 갈까</h2>
-        <p id="planLede">읽은 스크린샷에서 아직 못 낚은 물고기를 낚시터별로 묶어서, 들르면 좋은 순서대로 보여준담메. 한 낚시터에 여러 곳에서 낚이는 물고기가 있으면 앞 순위에서 먼저 셈한담메. 물고기 이름을 두 번 누르면 낚은 걸로 체크된담메.</p>
+        <p id="planLede">읽은 스크린샷에서 아직 못 낚은 물고기를 낚시터별로 묶어서, 들르면 좋은 순서대로 보여준담메. 한 낚시터에 여러 곳에서 낚이는 물고기가 있으면 앞 순위에서 먼저 셈한담메. 낚시터 카드의 "낚은 물고기 체크"를 누르면 낚은 물고기를 골라서 반영할 수 있담메.</p>
       </div>
       <div class="plan-stats">
         <div><b id="planLeft">0</b><span>못 낚은 물고기</span></div>
@@ -559,11 +566,11 @@ footer a { color: inherit; }
     $('examples').hidden = spear;
     $('planTitle').textContent = spear ? '어디부터 작살질하러 갈까' : '어디부터 낚으러 갈까';
     $('planLede').textContent = spear
-      ? '읽은 스크린샷에서 아직 못 잡은 물고기를 작살질 낚시터별로 묶어서, 들르면 좋은 순서대로 보여준담메. 여러 곳에서 잡히는 물고기는 앞 순위에서 먼저 셈한담메. 물고기 이름을 두 번 누르면 잡은 걸로 체크된담메.'
-      : '읽은 스크린샷에서 아직 못 낚은 물고기를 낚시터별로 묶어서, 들르면 좋은 순서대로 보여준담메. 한 낚시터에 여러 곳에서 낚이는 물고기가 있으면 앞 순위에서 먼저 셈한담메. 물고기 이름을 두 번 누르면 낚은 걸로 체크된담메.';
+      ? '읽은 스크린샷에서 아직 못 잡은 물고기를 작살질 낚시터별로 묶어서, 들르면 좋은 순서대로 보여준담메. 여러 곳에서 잡히는 물고기는 앞 순위에서 먼저 셈한담메. 낚시터 카드의 "잡은 물고기 체크"를 누르면 잡은 물고기를 골라서 반영할 수 있담메.'
+      : '읽은 스크린샷에서 아직 못 낚은 물고기를 낚시터별로 묶어서, 들르면 좋은 순서대로 보여준담메. 한 낚시터에 여러 곳에서 낚이는 물고기가 있으면 앞 순위에서 먼저 셈한담메. 낚시터 카드의 "낚은 물고기 체크"를 누르면 낚은 물고기를 골라서 반영할 수 있담메.';
     $('fOceanChip').hidden = spear;
     $('modeNote').hidden = true;
-    $('planUndo').hidden = true; lastMark = null;
+    $('planUndo').hidden = true; lastMark = null; editing = null;
     const ver = D.fish.version ? `, 트래커 기준 ${D.fish.version} 패치` : '';
     $('dataInfo').textContent = `${D[m].label} 도감 데이터: ${fish.length.toLocaleString()}종${ver} · 도감 ${pages}페이지`;
     if (!quiet) { saveUi(); refreshAll(); }
@@ -1124,26 +1131,35 @@ footer a { color: inherit; }
     for (const [bit, cls, label] of TAGS) if (flags & bit) {
       const t = document.createElement('span'); t.className = 'tagc ' + cls; t.textContent = label; li.append(t); names.push(label);
     }
-    li.title = f[1] + (names.length ? ' · ' + names.join(', ') + ' 조건' : ' · 상시') + ' · 두 번 누르면 잡은 걸로 체크';
-    li.addEventListener('dblclick', () => markCaught(i));
+    li.title = f[1] + (names.length ? ' · ' + names.join(', ') + ' 조건' : ' · 상시');
     return li;
   }
 
-  // Double-clicking a fish in the planner marks it caught: on its screenshot when the page was read, otherwise in a manual list.
+  // Check mode on one spot card: pick the fish you caught there, then "완료" marks them all and re-ranks.
+  // A fish on a read page is marked on its screenshot; otherwise it goes to the manual list.
   let lastMark = null;
-  function markCaught(i) {
-    const s = pageOwners().get(Math.floor(i / 100));
-    const k = s ? s.result.cells.findIndex(c => c.idx === i) : -1;
-    if (s && k >= 0) {
-      const prev = s.overrides.has(k) ? s.overrides.get(k) : undefined;
-      if (s.result.cells[k].state === 'caught') s.overrides.delete(k); else s.overrides.set(k, 'caught');
-      saveShot(s); renderShot(s);
-      lastMark = { m: mode, i, undo: () => { if (prev === undefined) s.overrides.delete(k); else s.overrides.set(k, prev); saveShot(s); renderShot(s); } };
-    } else {
-      const set = D[mode].manual; set.add(i); saveUi();
-      lastMark = { m: mode, i, undo: () => { set.delete(i); saveUi(); } };
+  let editing = null; // { spot, sel: Set of guide indexes }
+  function markCaught(list) {
+    const undos = [];
+    const touched = new Set();
+    for (const i of list) {
+      const s = pageOwners().get(Math.floor(i / 100));
+      const k = s ? s.result.cells.findIndex(c => c.idx === i) : -1;
+      if (s && k >= 0) {
+        const prev = s.overrides.has(k) ? s.overrides.get(k) : undefined;
+        if (s.result.cells[k].state === 'caught') s.overrides.delete(k); else s.overrides.set(k, 'caught');
+        touched.add(s);
+        undos.push(() => { if (prev === undefined) s.overrides.delete(k); else s.overrides.set(k, prev); touched.add(s); });
+      } else {
+        const set = D[mode].manual; set.add(i);
+        undos.push(() => set.delete(i));
+      }
     }
-    $('planUndoText').textContent = `${fish[i][1]}, ${mode === 'spear' ? '잡은' : '낚은'} 걸로 체크했담메.`;
+    const flush = () => { touched.forEach(s => { saveShot(s); renderShot(s); }); touched.clear(); saveUi(); };
+    flush();
+    lastMark = { undo: () => { undos.forEach(u => u()); flush(); } };
+    const verb = mode === 'spear' ? '잡은' : '낚은';
+    $('planUndoText').textContent = list.length === 1 ? `${fish[list[0]][1]}, ${verb} 걸로 체크했담메.` : `${fish[list[0]][1]} 외 ${list.length - 1}마리를 ${verb} 걸로 체크했담메.`;
     $('planUndo').hidden = false;
     refreshAll();
   }
@@ -1151,6 +1167,35 @@ footer a { color: inherit; }
     if (!lastMark) return;
     lastMark.undo(); lastMark = null; $('planUndo').hidden = true; refreshAll();
   });
+  function stopFoot(r) {
+    const verb = mode === 'spear' ? '잡은' : '낚은';
+    const foot = document.createElement('div'); foot.className = 'stop-foot';
+    const btn = (label, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn ' + cls; b.textContent = label; b.addEventListener('click', fn); foot.append(b); return b; };
+    if (editing && editing.spot === r.sp.id) {
+      const hint = document.createElement('span'); hint.className = 'hint'; hint.textContent = `${verb} 물고기를 골라달람메.`; foot.append(hint);
+      btn('취소', 'ghost', () => { editing = null; refreshPlan(); });
+      const done = btn(`완료${editing.sel.size ? ` (${editing.sel.size})` : ''}`, '', () => {
+        const list = [...editing.sel].sort((a, b) => a - b); editing = null;
+        if (list.length) markCaught(list); else refreshPlan();
+      });
+      done.dataset.role = 'done';
+    } else {
+      btn(`${verb} 물고기 체크`, 'ghost', () => { editing = { spot: r.sp.id, sel: new Set() }; refreshPlan(); });
+    }
+    return foot;
+  }
+  function makeCheckable(li, i, foot) {
+    const ed = editing;
+    li.setAttribute('role', 'checkbox'); li.tabIndex = 0;
+    li.setAttribute('aria-checked', ed.sel.has(i) ? 'true' : 'false');
+    const toggle = () => {
+      if (ed.sel.has(i)) ed.sel.delete(i); else ed.sel.add(i);
+      li.setAttribute('aria-checked', ed.sel.has(i) ? 'true' : 'false');
+      foot.querySelector('[data-role="done"]').textContent = `완료${ed.sel.size ? ` (${ed.sel.size})` : ''}`;
+    };
+    li.addEventListener('click', toggle);
+    li.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } });
+  }
 
   function refreshPlan() {
     if (!fish.length) return;
@@ -1170,20 +1215,30 @@ footer a { color: inherit; }
     }
     empty.hidden = true;
     const route = $('sortRoute').checked;
-    stops.slice(0, planShown).forEach((r, n) => {
-      const li = document.createElement('li'); li.className = 'stop' + (n < 3 ? ' top' : '');
+    const shown = stops.slice(0, planShown);
+    if (editing && !shown.some(r => r.sp.id === editing.spot)) editing = null;
+    shown.forEach((r, n) => {
+      const isEdit = editing && editing.spot === r.sp.id;
+      const li = document.createElement('li'); li.className = 'stop' + (isEdit ? ' editing' : n < 3 ? ' top' : '');
       const where = [r.sp.zone, r.sp.region].filter((v, k, a) => v && a.indexOf(v) === k).join(' · ');
       li.innerHTML = `<div class="stop-head"><div class="stop-rank">${n + 1}</div><div><div class="stop-name"></div><div class="stop-where"></div></div><div class="stop-count"><b>${r.fresh.length}</b><span>${route ? '새로 낚을 물고기' : '못 낚은 물고기'}</span></div></div>`;
       li.querySelector('.stop-name').textContent = r.sp.name;
       li.querySelector('.stop-where').textContent = where + (r.sp.ocean ? '' : ` (X ${r.sp.x}, Y ${r.sp.y})`);
       const ul = document.createElement('ul'); ul.className = 'fishes';
-      r.fresh.forEach(i => ul.append(fishChip(i, false)));
+      const foot = stopFoot(r);
+      // While checking, fish already counted at an earlier stop can be picked here too.
+      (isEdit ? r.fresh.concat(r.also) : r.fresh).forEach(i => {
+        const chip = fishChip(i, false);
+        if (isEdit) makeCheckable(chip, i, foot);
+        ul.append(chip);
+      });
       li.append(ul);
-      if (r.also.length) {
+      if (r.also.length && !isEdit) {
         const p = document.createElement('p'); p.className = 'stop-also';
         p.textContent = `앞 순위에서 셈한 ${r.also.map(i => fish[i][1]).join(', ')}도 여기서 낚인담메.`;
         li.append(p);
       }
+      li.append(foot);
       list.append(li);
     });
     const rest = stops.length - Math.min(planShown, stops.length);
