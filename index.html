@@ -50,6 +50,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
   background: var(--paper); color: var(--ink);
   font-family: var(--body); font-size: 15px; line-height: 1.6;
@@ -184,6 +185,56 @@ textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; backg
 .warnbox { font-size: 13px; background: var(--amber-soft); border-radius: 8px; padding: 10px 14px; margin: 0; }
 .warnbox b { margin-right: 4px; }
 
+/* Spot planner: a full-width board of numbered stops, the main thing to read after uploading. */
+.planner { background: var(--sheet); border: 1px solid var(--line); border-radius: 14px; padding: var(--pad-box); display: flex; flex-direction: column; gap: 18px; }
+.plan-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px 24px; flex-wrap: wrap; }
+.plan-head h2 { font-family: var(--display); font-weight: 700; font-size: clamp(24px, 3.4vw, 32px); margin: 0; letter-spacing: -0.01em; text-wrap: balance; word-break: keep-all; }
+.plan-head p { margin: 6px 0 0; color: var(--muted); font-size: 14px; max-width: 62ch; text-align: justify; }
+.plan-stats { display: flex; gap: 20px; }
+.plan-stats div { display: flex; flex-direction: column; align-items: flex-end; }
+.plan-stats b { font-family: var(--display); font-size: 30px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.plan-stats span { font-size: 12px; color: var(--muted); }
+.plan-controls { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: flex-start; padding: 14px var(--pad-card); background: var(--paper); border-radius: 10px; }
+.plan-controls fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+.plan-controls legend { font-size: 12px; font-weight: 600; color: var(--muted); padding: 0; margin-bottom: 6px; width: 100%; }
+.chk { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--sheet); cursor: pointer; user-select: none; }
+.chk input { accent-color: var(--lure); margin: 0; }
+.chk:has(input:checked) { border-color: var(--lure); }
+.chk:has(input:disabled) { cursor: default; opacity: .75; }
+.chk:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.plan-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 12px; }
+.stop { border: 1px solid var(--line); border-radius: 12px; padding: 14px var(--pad-card); display: flex; flex-direction: column; gap: 10px; background: var(--sheet); min-width: 0; }
+.stop.top { border-color: var(--lure); box-shadow: inset 0 0 0 1px var(--lure); }
+.stop-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; }
+.stop-rank { font-family: var(--display); font-weight: 700; font-size: 28px; line-height: 1; color: var(--lure); min-width: 1.4em; font-variant-numeric: tabular-nums; }
+.stop-name { font-weight: 600; font-size: 16px; line-height: 1.3; word-break: keep-all; }
+.stop-where { font-size: 12px; color: var(--muted); margin-top: 2px; word-break: keep-all; }
+.stop-count { text-align: right; }
+.stop-count b { font-family: var(--display); font-size: 24px; line-height: 1; font-variant-numeric: tabular-nums; }
+.stop-count span { display: block; font-size: 11px; color: var(--muted); white-space: nowrap; }
+.stop-bar { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.stop-bar i { display: block; height: 100%; background: var(--kelp); }
+.fishes { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.fishes li { font-size: 13px; padding: 3px 9px; border-radius: 999px; background: var(--paper); border: 1px solid var(--line); display: inline-flex; gap: 5px; align-items: center; word-break: keep-all; }
+.fishes li.dim { opacity: .5; }
+.tagc { font-size: 10px; font-weight: 600; padding: 0 5px; border-radius: 4px; line-height: 16px; }
+.tagc.t, .tagc.w { background: var(--amber-soft); color: var(--amber); }
+.tagc.b { background: var(--lure-soft); color: var(--lure); }
+.tagc.p { background: var(--kelp-soft); color: var(--kelp); }
+.tagc.o { background: var(--paper); color: var(--muted); border: 1px solid var(--line); }
+.stop-also { font-size: 12px; color: var(--muted); margin: 0; }
+.plan-more { align-self: center; }
+.plan-empty { margin: 0; padding: 28px var(--pad-box); border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 14px; text-align: center; }
+/* Guide tab switch: the whole page below follows it. */
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 6px; background: var(--sheet); border: 1px solid var(--line); border-radius: 16px; }
+.mode { border: 0; background: transparent; border-radius: 11px; padding: 12px 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--muted); }
+.mode b { font-family: var(--display); font-size: clamp(20px, 3vw, 26px); font-weight: 700; line-height: 1.2; }
+.mode span { font-size: 12px; }
+.mode:hover { color: var(--ink); }
+.mode[aria-selected="true"] { background: var(--ink); color: var(--paper); }
+.mode[aria-selected="true"] span { color: var(--paper); opacity: .8; }
+.mode-note { margin: 10px 0 0; font-size: 13px; color: var(--kelp); text-align: center; }
+.rail .merged-note { margin: -6px 0 0; font-size: 12px; color: var(--muted); }
 footer { font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 4px; }
 footer a { color: inherit; }
 
@@ -201,6 +252,11 @@ footer a { color: inherit; }
     </div>
   </header>
 
+  <nav class="modes" role="tablist" aria-label="도감 탭">
+    <button class="mode" role="tab" id="modeFish" data-mode="fish" aria-selected="true" type="button"><b>낚시</b><span id="modeFishInfo">낚싯대 탭 도감</span></button>
+    <button class="mode" role="tab" id="modeSpear" data-mode="spear" aria-selected="false" type="button"><b>작살</b><span id="modeSpearInfo">작살 탭 도감</span></button>
+  </nav>
+
   <section class="prep" aria-labelledby="prepTitle">
     <h2 id="prepTitle">찍기 전에 꼭 확인해달람메</h2>
     <ol class="prep-steps">
@@ -208,19 +264,19 @@ footer a { color: inherit; }
         <span class="num">1</span>
         <div>
           <strong>도감 필터 끄기</strong>
-          <p>어류도감 오른쪽 위 깔때기 아이콘을 꺼달람메. 켜져 있으면 칸 위치가 달라져서 못 읽는담메.</p>
+          <p id="step1Text">어류도감 오른쪽 위 깔때기 아이콘을 꺼달람메. 켜져 있으면 칸 위치가 달라져서 못 읽는담메.</p>
         </div>
       </li>
       <li>
         <span class="num">2</span>
         <div>
           <strong>페이지마다 캡처</strong>
-          <p>한 페이지당 스크린샷 한 장이람메. 도감 창만 잘라도 되고 게임 전체 화면도 된담메. 1~16페이지 전체를 업로드할 필요는 없지만, 업로드되지 않은 페이지는 당연히 목록에서 빠지니 주의하람메.</p>
+          <p>한 페이지당 스크린샷 한 장이람메. 도감 창만 잘라도 되고 게임 전체 화면도 된담메. <span class="pgRange">1~16</span>페이지 전체를 업로드할 필요는 없지만, 업로드되지 않은 페이지는 당연히 목록에서 빠지니 주의하람메.</p>
         </div>
       </li>
     </ol>
-    <p class="prep-warn"><b>이런 건 못 읽는담메</b> 낚은 물고기가 한 마리도 없는 페이지는 몇 페이지인지 알 수 없어서 목록에 못 넣는담메. 작살질로 잡는 물고기(도감 오른쪽 아래 작살 탭)도 못 읽는담메. 낚싯대 탭 도감만 찍어달람메.</p>
-    <div class="prep-examples">
+    <p class="prep-warn"><b>이런 건 못 읽는담메</b> 낚은 물고기가 한 마리도 없는 페이지는 몇 페이지인지 알 수 없어서 목록에 못 넣는담메. <span id="warnTab">작살 탭 도감은 위에서 작살 탭으로 바꾸고 올려달람메.</span></p>
+    <div class="prep-examples" id="examples">
       <figure style="--ar: 1.5960">
         <img src="example-crop.jpg" alt="필터를 끈 어류도감 1페이지를 도감 창만 잘라서 찍은 예시" width="640" height="401" loading="lazy">
         <figcaption>예시 1 · 도감 창만 자른 사진</figcaption>
@@ -235,12 +291,13 @@ footer a { color: inherit; }
   <section class="intake">
     <div class="drop" id="drop" tabindex="0" role="button" aria-label="스크린샷 추가">
       <strong>스크린샷을 여기에 끌어다 놓아달람메!</strong>
-      <p>도감 1~16페이지를 한꺼번에 올려도 된담메. 순서는 상관없담메. 게임 전체 화면을 찍어도 도감을 찾아낸담메.</p>
+      <p>도감 <span class="pgRange">1~16</span>페이지를 한꺼번에 올려도 된담메. 순서는 상관없담메. 게임 전체 화면을 찍어도 도감을 찾아낸담메.</p>
       <div class="row">
         <label class="btn" id="pick" for="file">파일 고르기</label>
         <span style="font-size:13px;color:var(--muted)">또는 복사한 이미지를 <span class="kbd">Ctrl</span> + <span class="kbd">V</span></span>
       </div>
       <input id="file" class="vh" type="file" accept="image/*" multiple>
+      <p class="mode-note" id="modeNote" hidden></p>
     </div>
   </section>
 
@@ -252,7 +309,7 @@ footer a { color: inherit; }
         <p id="coverText">아직 읽은 페이지가 없담메.</p>
         <div class="cover-foot" id="coverFoot" hidden>
           <span id="savedInfo">결과는 이 브라우저에 저장돼서 새로고침해도 남는담메.</span>
-          <button class="btn ghost" id="clearAll" type="button">결과 모두 지우기</button>
+          <button class="btn ghost" id="clearAll" type="button">이 탭 결과 지우기</button>
         </div>
       </div>
       <div>
@@ -275,6 +332,7 @@ footer a { color: inherit; }
         <div><b id="nAll">0</b><span>넣을 물고기</span></div>
         <div><b id="nBig">0</b><span>그중 터주</span></div>
       </div>
+      <p class="merged-note">낚시 탭과 작살 탭 결과를 합친 목록이담메.</p>
       <div class="seg" role="radiogroup" aria-label="포함할 물고기">
         <label><input type="radio" name="scope" id="scopeAll" value="all" checked><span>트래커 전체</span></label>
         <label><input type="radio" name="scope" id="scopeBig" value="big"><span>터주만</span></label>
@@ -319,9 +377,45 @@ footer a { color: inherit; }
     </aside>
   </section>
 
+  <section class="planner" aria-labelledby="planTitle">
+    <div class="plan-head">
+      <div>
+        <h2 id="planTitle">어디부터 낚으러 갈까</h2>
+        <p id="planLede">읽은 스크린샷에서 아직 못 낚은 물고기를 낚시터별로 묶어서, 들르면 좋은 순서대로 보여준담메. 한 낚시터에 여러 곳에서 낚이는 물고기가 있으면 앞 순위에서 먼저 셈한담메.</p>
+      </div>
+      <div class="plan-stats">
+        <div><b id="planLeft">0</b><span>못 낚은 물고기</span></div>
+        <div><b id="planSpots">0</b><span>들를 낚시터</span></div>
+      </div>
+    </div>
+    <div class="plan-controls">
+      <fieldset>
+        <legend>포함할 물고기</legend>
+        <label class="chk"><input type="checkbox" checked disabled>상시</label>
+        <label class="chk"><input type="checkbox" id="fTime" checked>시간 조건</label>
+        <label class="chk"><input type="checkbox" id="fWeather" checked>날씨 조건</label>
+        <label class="chk"><input type="checkbox" id="fPre">선행 조건</label>
+        <label class="chk"><input type="checkbox" id="fBig">터주</label>
+        <label class="chk" id="fOceanChip"><input type="checkbox" id="fOcean">먼바다</label>
+      </fieldset>
+      <fieldset>
+        <legend>정렬</legend>
+        <label class="chk"><input type="radio" name="planSort" id="sortRoute" checked>추천 순서</label>
+        <label class="chk"><input type="radio" name="planSort" id="sortCount">못 낚은 물고기 많은 순</label>
+      </fieldset>
+      <fieldset>
+        <legend>읽지 않은 페이지</legend>
+        <label class="chk"><input type="checkbox" id="fUnread">못 낚은 걸로 치기</label>
+      </fieldset>
+    </div>
+    <p class="plan-empty" id="planEmpty" hidden></p>
+    <ol class="plan-list" id="planList"></ol>
+    <button class="btn ghost plan-more" id="planMore" type="button" hidden>낚시터 더 보기</button>
+  </section>
+
   <footer>
     <span id="dataInfo">물고기 데이터를 불러오는 중이담메…</span>
-    <span>물고기 목록과 아이콘은 <a href="https://github.com/icykoneko/ff14-fish-tracker-app" target="_blank" rel="noopener">FFX|V Fish Tracker App</a>(MIT 라이선스)에서 가져왔담메. 한국 서버에 아직 없는 물고기가 있으면 마지막 페이지 근처가 어긋날 수 있담메.</span>
+    <span>물고기 목록과 아이콘은 <a href="https://github.com/icykoneko/ff14-fish-tracker-app" target="_blank" rel="noopener">FFX|V Fish Tracker App</a>(MIT 라이선스)에서, 낚시터와 작살 도감 순서는 <a href="https://github.com/ffxiv-teamcraft/ffxiv-teamcraft" target="_blank" rel="noopener">FFXIV Teamcraft</a>(MIT 라이선스)에서 가져왔담메. 한국 서버에 아직 없는 물고기가 있으면 마지막 페이지 근처가 어긋날 수 있담메.</span>
   </footer>
 </div>
 
@@ -331,13 +425,18 @@ footer a { color: inherit; }
   const $ = (id) => document.getElementById(id);
   const TOTAL_PAGES_FALLBACK = 16;
 
-  let fish = [];            // [id, name, iconIndex, inTracker, big]
+  // Two guide tabs, each with its own fish list and spots. Shots remember which tab they belong to.
+  const D = { fish: { fish: [], spots: [], label: '낚시', pages: 16 }, spear: { fish: [], spots: [], label: '작살', pages: 3 } };
+  let mode = 'fish';
+  let fish = [];            // the current tab's fish: [id, name, iconIndex, inTracker, big, flags]
+  const FD = (s) => D[s.mode].fish;
   // A small pool of workers reads several screenshots at once.
   const workers = [];        // {w, busy}
   let workerReady = null;
   const shots = [];          // {id, name, sample, status, result, overrides, preview, scale, el}
   let nextId = 1;
   let selectedPage = null;   // only this page's screenshot is shown
+  let spots = [];            // fishing spots: {id, name, zone, region, ocean, x, y, fish: [guide index]}
   let seqCounter = 0;
 
   // ---------- saved results (IndexedDB, in this browser only) ----------
@@ -374,12 +473,16 @@ footer a { color: inherit; }
   function saveShot(s) {
     if (s.sample || !s.blob) return;
     store.put({
-      key: s.key, seq: s.seq, name: s.name, blob: s.blob,
+      key: s.key, seq: s.seq, name: s.name, blob: s.blob, mode: s.mode,
       status: (s.status === 'busy' || s.status === 'wait') ? 'wait' : s.status,
       result: s.result, overrides: [...s.overrides], hint: s.hint, error: s.error || null,
     });
   }
-  function saveUi() { store.setUi({ merge: $('merge').value, scope: $('scopeBig').checked ? 'big' : 'all' }); }
+  const PLAN_INPUTS = ['fTime', 'fWeather', 'fPre', 'fBig', 'fOcean', 'fUnread', 'sortRoute', 'sortCount'];
+  function saveUi() {
+    const plan = {}; PLAN_INPUTS.forEach(id => { plan[id] = $(id).checked; });
+    store.setUi({ merge: $('merge').value, scope: $('scopeBig').checked ? 'big' : 'all', plan, mode });
+  }
 
   // ---------- data ----------
   function imageDataFrom(src) {
@@ -397,14 +500,20 @@ footer a { color: inherit; }
   }
 
   async function boot() {
-    const meta = await (await fetch('fish.json')).json();
-    fish = meta.fish;
-    const pages = Math.ceil(fish.length / 100);
-    $('dataInfo').textContent = `물고기 데이터: ${fish.length.toLocaleString()}종, 트래커 기준 ${meta.version.split('_')[0]} 패치 · 도감 ${pages}페이지`;
-    drawPager();
-    const [icons, unknown, blank] = await Promise.all([imageDataFrom('icons.png'), imageDataFrom('unknown.png'), imageDataFrom('blank.png')]);
-    const count = Math.max(...fish.map(r => r[2])) + 1;
-    const fishIcons = fish.map(r => r[2]);
+    const getJson = (u) => fetch(u).then(r => r.json());
+    const [meta, spotData, smeta, sspots] = await Promise.all([getJson('fish.json'), getJson('spots.json').catch(() => ({ spots: [] })),
+      getJson('spear.json').catch(() => ({ fish: [], cols: 1, count: 0 })), getJson('spear-spots.json').catch(() => ({ spots: [] }))]);
+    D.fish.fish = meta.fish; D.fish.spots = spotData.spots; D.fish.version = meta.version.split('_')[0];
+    D.spear.fish = smeta.fish; D.spear.spots = sspots.spots;
+    for (const m of ['fish', 'spear']) D[m].pages = Math.max(1, Math.ceil(D[m].fish.length / 100));
+    const ui = await store.getUi();
+    setMode(ui && ui.mode === 'spear' ? 'spear' : 'fish', true);
+    const [icons, sicons, unknown, blank] = await Promise.all([imageDataFrom('icons.png'), imageDataFrom('spear-icons.png'), imageDataFrom('unknown.png'), imageDataFrom('blank.png')]);
+    const pack = (im) => ({ w: im.w, h: im.h, data: new Uint8ClampedArray(im.data) });
+    const sets = {
+      fish: { icons: pack(icons), cols: meta.cols, count: Math.max(...meta.fish.map(r => r[2])) + 1, fishIcons: meta.fish.map(r => r[2]) },
+      spear: { icons: pack(sicons), cols: smeta.cols, count: smeta.count, fishIcons: smeta.fish.map(r => r[2]) },
+    };
     const n = Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 2) - 1));
     const readies = [];
     for (let i = 0; i < n; i++) {
@@ -413,21 +522,56 @@ footer a { color: inherit; }
         w.addEventListener('message', function once(e) { if (e.data.type === 'ready') { w.removeEventListener('message', once); res(); } });
       }));
       w.addEventListener('message', onWorkerMessage);
-      w.postMessage({ type: 'init', icons: { w: icons.w, h: icons.h, data: new Uint8ClampedArray(icons.data) }, unknown: { w: unknown.w, h: unknown.h, data: new Uint8ClampedArray(unknown.data) }, blank: { w: blank.w, h: blank.h, data: new Uint8ClampedArray(blank.data) }, cols: meta.cols, count, fishIcons });
+      w.postMessage({ type: 'init', sets, unknown: pack(unknown), blank: pack(blank) });
       workers.push({ w, busy: false });
     }
     workerReady = Promise.all(readies);
     await workerReady;
-    const ui = await store.getUi();
     if (ui) {
       if (ui.merge) { $('merge').value = ui.merge; $('merge').dispatchEvent(new Event('input')); }
       if (ui.scope === 'big') $('scopeBig').checked = true;
+      if (ui.plan) PLAN_INPUTS.forEach(id => { if (id in ui.plan) $(id).checked = ui.plan[id]; });
     }
     const saved = (await store.all()).sort((a, b) => a.seq - b.seq);
     if (saved.length) {
       saved.forEach(rec => queueShot({ name: rec.name, src: URL.createObjectURL(rec.blob), blob: rec.blob, sample: false, saved: rec }));
-      refreshAll();
-    } else addSample();
+    }
+    if (!saved.length) addSample();
+    refreshAll();
+  }
+
+  // ---------- guide tab ----------
+  function setMode(m, quiet) {
+    mode = m; fish = D[m].fish; spots = D[m].spots;
+    selectedPage = null; planShown = PLAN_PAGE;
+    for (const b of document.querySelectorAll('.mode')) b.setAttribute('aria-selected', b.dataset.mode === m ? 'true' : 'false');
+    const spear = m === 'spear', pages = D[m].pages;
+    document.querySelectorAll('.pgRange').forEach(e => { e.textContent = `1~${pages}`; });
+    $('step1Text').textContent = spear
+      ? '어류도감 오른쪽 아래에서 작살 탭을 고르고, 오른쪽 위 깔때기 아이콘을 꺼달람메. 켜져 있으면 칸 위치가 달라져서 못 읽는담메.'
+      : '어류도감 오른쪽 위 깔때기 아이콘을 꺼달람메. 켜져 있으면 칸 위치가 달라져서 못 읽는담메.';
+    $('warnTab').textContent = spear ? '낚싯대 탭 도감은 위에서 낚시 탭으로 바꾸고 올려달람메.' : '작살 탭 도감은 위에서 작살 탭으로 바꾸고 올려달람메.';
+    $('examples').hidden = spear;
+    $('planTitle').textContent = spear ? '어디부터 작살질하러 갈까' : '어디부터 낚으러 갈까';
+    $('planLede').textContent = spear
+      ? '읽은 스크린샷에서 아직 못 잡은 물고기를 작살질 낚시터별로 묶어서, 들르면 좋은 순서대로 보여준담메. 여러 곳에서 잡히는 물고기는 앞 순위에서 먼저 셈한담메.'
+      : '읽은 스크린샷에서 아직 못 낚은 물고기를 낚시터별로 묶어서, 들르면 좋은 순서대로 보여준담메. 한 낚시터에 여러 곳에서 낚이는 물고기가 있으면 앞 순위에서 먼저 셈한담메.';
+    $('fOceanChip').hidden = spear;
+    $('modeNote').hidden = true;
+    const ver = D.fish.version ? `, 트래커 기준 ${D.fish.version} 패치` : '';
+    $('dataInfo').textContent = `${D[m].label} 도감 데이터: ${fish.length.toLocaleString()}종${ver} · 도감 ${pages}페이지`;
+    if (!quiet) { saveUi(); refreshAll(); }
+  }
+  document.querySelectorAll('.mode').forEach(b => b.addEventListener('click', () => { if (b.dataset.mode !== mode) setMode(b.dataset.mode); }));
+  function modeInfo() {
+    for (const m of ['fish', 'spear']) {
+      const owners = pageOwners(m);
+      let caught = 0;
+      for (const [, s] of owners) s.result.cells.forEach((c, k) => { if (c.state !== 'none' && cellState(s, k) === 'caught') caught++; });
+      const real = shots.some(s => s.mode === m && !s.sample);
+      $(m === 'fish' ? 'modeFishInfo' : 'modeSpearInfo').textContent = owners.size && real
+        ? `${owners.size}/${D[m].pages}페이지 · ${caught}마리` : m === 'fish' ? '낚싯대 탭 도감' : '작살 탭 도감';
+    }
   }
 
   // ---------- intake ----------
@@ -450,12 +594,14 @@ footer a { color: inherit; }
   function clearSamples() {
     for (let i = shots.length - 1; i >= 0; i--) if (shots[i].sample) { shots[i].el.remove(); shots.splice(i, 1); }
   }
+  let movedCount = 0;
 
   function addFiles(files) {
     files = files.filter(f => f && f.type.startsWith('image/'));
     if (!files.length) return;
     clearSamples();
     selectedPage = null;
+    movedCount = 0; $('modeNote').hidden = true;
     files.forEach(f => {
       const url = URL.createObjectURL(f);
       queueShot({ name: f.name || '붙여넣은 이미지', src: url, blob: f, sample: false });
@@ -463,7 +609,7 @@ footer a { color: inherit; }
     refreshAll();
   }
 
-  function addSample() { queueShot({ name: '예시 스크린샷', src: 'sample.png', sample: true }); refreshAll(); }
+  function addSample() { queueShot({ name: '예시 스크린샷', src: 'sample.png', sample: true, mode: 'fish' }); refreshAll(); }
 
   // ---------- analysis queue ----------
   const queue = [];
@@ -471,6 +617,7 @@ footer a { color: inherit; }
   function queueShot(info) {
     const rec = info.saved;
     const s = { id: nextId++, name: info.name, src: info.src, sample: info.sample, blob: info.blob || null,
+      mode: rec ? (rec.mode || 'fish') : (info.mode || mode),
       key: rec ? rec.key : Date.now().toString(36) + Math.random().toString(36).slice(2),
       seq: rec ? rec.seq : Date.now() * 1000 + (seqCounter++ % 1000),
       status: 'wait', result: null, overrides: new Map(), hint: rec ? rec.hint : null, picking: null };
@@ -511,10 +658,19 @@ footer a { color: inherit; }
       const r = await new Promise((res) => {
         pending.set(s.id, res);
         const copy = new Uint8ClampedArray(s.img.data);
-        worker.postMessage({ type: 'analyze', id: s.id, img: { w: s.img.w, h: s.img.h, data: copy }, hint: s.hint }, [copy.buffer]);
+        worker.postMessage({ type: 'analyze', id: s.id, mode: s.mode, img: { w: s.img.w, h: s.img.h, data: copy }, hint: s.hint }, [copy.buffer]);
       });
       if (r.error) { s.status = 'error'; s.error = r.error; }
-      else { s.result = r.r; s.status = r.r.ok ? 'done' : 'bad'; s.overrides.clear(); }
+      else {
+        s.result = r.r; s.status = r.r.ok ? 'done' : 'bad'; s.overrides.clear();
+        if (r.mode && r.mode !== s.mode && !s.sample) {
+          // A screenshot of the other guide tab: file it there and say so.
+          s.mode = r.mode; movedCount++;
+          const n = $('modeNote');
+          n.textContent = `${D[r.mode].label} 탭 도감 사진 ${movedCount}장은 ${D[r.mode].label} 탭으로 옮겼담메.`;
+          n.hidden = false;
+        }
+      }
     } catch (err) { s.status = 'error'; s.error = err.message; }
     if (s.sample && s.status === 'done') selectedPage = s.result.page;
     if (!shots.includes(s)) return;
@@ -532,9 +688,9 @@ footer a { color: inherit; }
     return s.result.cells[k].state;
   }
   // later screenshots of the same page win
-  function pageOwners() {
+  function pageOwners(m = mode) {
     const owners = new Map();
-    for (const s of shots) if (s.status === 'done' && s.result.page >= 0) owners.set(s.result.page, s);
+    for (const s of shots) if (s.mode === m && s.status === 'done' && s.result.page >= 0) owners.set(s.result.page, s);
     return owners;
   }
 
@@ -542,7 +698,8 @@ footer a { color: inherit; }
   function renderShot(s) {
     const el = s.el;
     el.classList.toggle('bad', s.status === 'bad' || s.status === 'error');
-    const owners = pageOwners();
+    const owners = pageOwners(s.mode);
+    const fish = FD(s);
     let head = '', body = '', note = '', actions = '';
     const label = s.sample ? '<span class="tag">예시</span>' : '';
     if (s.status === 'wait' || s.status === 'busy') {
@@ -596,7 +753,7 @@ footer a { color: inherit; }
   }
 
   function drawCanvas(s, cv) {
-    const img = s.img.el, W = s.full.w, H = s.full.h;
+    const img = s.img.el, W = s.full.w, H = s.full.h, fish = FD(s);
     let view;
     const g0 = s.result && s.result.ok ? s.result.grid : null;
     if (g0) {
@@ -671,7 +828,7 @@ footer a { color: inherit; }
       const c = h.k >= 0 ? s.result.cells[h.k] : null;
       if (!c || c.state === 'none') { tip.hidden = true; return; }
       const st = cellState(s, h.k);
-      const f = fish[c.idx];
+      const f = FD(s)[c.idx];
       tip.textContent = `${f[1]} · ${st === 'caught' ? '낚음' : st === 'empty' ? '안 낚음' : '확인 필요'}${f[3] ? '' : ' · 트래커에 없음'}`;
       tip.style.left = h.rx + 'px'; tip.style.top = h.ry + 'px'; tip.hidden = false;
     });
@@ -704,7 +861,7 @@ footer a { color: inherit; }
   }
 
   function drawPager() {
-    const pages = Math.max(1, Math.ceil(fish.length / 100)) || TOTAL_PAGES_FALLBACK;
+    const pages = D[mode].pages || TOTAL_PAGES_FALLBACK;
     const owners = pageOwners();
     const box = $('pager'); box.innerHTML = '';
     let have = 0;
@@ -728,12 +885,13 @@ footer a { color: inherit; }
       } else d.title = `${p + 1}페이지 · 아직 없음`;
       box.appendChild(d);
     }
-    const onlySample = shots.length && shots.every(s => s.sample);
+    const mine = shots.filter(s => s.mode === mode);
+    const onlySample = mine.length && mine.every(s => s.sample);
     $('coverText').textContent = have === 0 ? '아직 읽은 페이지가 없담메.'
       : onlySample ? '지금은 예시 사진 결과담메. 내 스크린샷을 올리면 예시는 사라진담메.'
       : have === pages ? `${pages}페이지를 모두 읽었담메!`
       : `${pages}페이지 중 ${have}페이지를 읽었담메. 빠진 페이지에서 낚은 물고기는 목록에 안 들어간담메.`;
-    $('coverFoot').hidden = !shots.some(x => !x.sample);
+    $('coverFoot').hidden = !mine.some(x => !x.sample);
   }
 
   // Two presses to clear, since the page can't show a confirm dialog.
@@ -742,15 +900,17 @@ footer a { color: inherit; }
     const b = $('clearAll');
     if (!clearArmed) {
       b.textContent = '한 번 더 누르면 다 지운담메';
-      clearArmed = setTimeout(() => { clearArmed = null; b.textContent = '결과 모두 지우기'; }, 4000);
+      clearArmed = setTimeout(() => { clearArmed = null; b.textContent = '이 탭 결과 지우기'; }, 4000);
       return;
     }
-    clearTimeout(clearArmed); clearArmed = null; b.textContent = '결과 모두 지우기';
-    await store.clear();
-    queue.length = 0;
-    shots.splice(0).forEach(x => x.el.remove());
+    clearTimeout(clearArmed); clearArmed = null; b.textContent = '이 탭 결과 지우기';
+    for (let i = shots.length - 1; i >= 0; i--) {
+      const x = shots[i]; if (x.mode !== mode) continue;
+      x.el.remove(); shots.splice(i, 1); if (!x.sample) store.del(x.key);
+    }
+    for (let i = queue.length - 1; i >= 0; i--) if (!shots.includes(queue[i])) queue.splice(i, 1);
     selectedPage = null;
-    addSample();
+    if (!shots.length) addSample(); else refreshAll();
   });
 
   // ---------- export ----------
@@ -775,16 +935,19 @@ footer a { color: inherit; }
 
   function refreshExport() {
     const bigOnly = $('scopeBig').checked;
-    const byId = new Map(fish.map(r => [r[0], r]));
+    const byId = new Map(D.fish.fish.concat(D.spear.fish).map(r => [r[0], r]));
     const ids = new Set();
     let unsure = 0;
-    for (const [, s] of pageOwners()) {
+    // The example screenshot only counts while nothing real has been read.
+    const real = shots.some(x => !x.sample);
+    for (const m of ['fish', 'spear']) for (const [, s] of pageOwners(m)) {
+      if (real && s.sample) continue;
       s.result.cells.forEach((c, k) => {
         if (c.state === 'none') return;
         const st = cellState(s, k);
         if (st === 'unsure') unsure++;
         if (st !== 'caught') return;
-        const f = fish[c.idx];
+        const f = D[m].fish[c.idx];
         if (!f[3]) return;
         if (bigOnly && !f[4]) return;
         ids.add(f[0]);
@@ -843,10 +1006,10 @@ footer a { color: inherit; }
   } else downloads = 'native';
   $('saveTxt').addEventListener('click', async () => {
     const t = $('txt').value; if (!t) return;
-    const filename = '낚은_물고기_목록.txt';
+    const filename = mode === 'spear' ? '작살_물고기_목록.txt' : '낚은_물고기_목록.txt';
     if (downloads === 'native') {
       const url = URL.createObjectURL(new Blob([t], { type: 'text/plain;charset=utf-8' }));
-      const a = document.createElement('a'); a.href = url; a.download = 'caught_fish.txt'; document.body.appendChild(a); a.click(); a.remove();
+      const a = document.createElement('a'); a.href = url; a.download = mode === 'spear' ? 'spear_fish.txt' : 'caught_fish.txt'; document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
       flashTxt('저장했담메!');
       return;
@@ -877,9 +1040,9 @@ footer a { color: inherit; }
     for (const s of shots) {
       const isBusy = s.status === 'wait' || s.status === 'busy';
       if (isBusy) busy++;
-      const vis = s.status === 'bad' || s.status === 'error'
+      const vis = s.mode === mode && (s.status === 'bad' || s.status === 'error'
         || (s.status === 'done' && s.result.page < 0)
-        || (s.status === 'done' && selectedPage === s.result.page && owners.get(s.result.page) === s);
+        || (s.status === 'done' && selectedPage === s.result.page && owners.get(s.result.page) === s));
       s.el.hidden = !vis;
       if (vis) shown++;
     }
@@ -887,15 +1050,129 @@ footer a { color: inherit; }
     $('progressText').textContent = busy ? `${shots.length - busy}/${shots.length}장 읽는 중이담메…` : '';
     const hint = $('viewHint');
     hint.hidden = shown > 0;
-    hint.textContent = !shots.length ? '스크린샷을 올리면 여기에 판독 결과가 나온담메.'
+    hint.textContent = !shots.some(s => s.mode === mode) ? '스크린샷을 올리면 여기에 판독 결과가 나온담메.'
       : owners.size ? '위의 페이지 번호를 눌러보람메. 그 페이지 사진이랑 판독 결과를 보여준담메. 노란 번호는 확인이 필요한 칸이 있는 페이지담메.'
       : '스크린샷을 읽는 중이담메…';
   }
+
+  // ---------- spot planner ----------
+  const F_TIME = 1, F_WEATHER = 2, F_BIG = 4, F_OCEAN = 8, F_PRE = 16;
+  const TAGS = [[F_BIG, 'b', '터주'], [F_TIME, 't', '시간'], [F_WEATHER, 'w', '날씨'], [F_PRE, 'p', '선행'], [F_OCEAN, 'o', '먼바다']];
+  const PLAN_PAGE = 24;
+  let planShown = PLAN_PAGE;
+
+  // Guide indexes still to catch: empty cells on read pages, plus (optionally) every fish on unread pages.
+  function targetFish() {
+    const owners = pageOwners();
+    const out = new Set();
+    for (const [, s] of owners) s.result.cells.forEach((c, k) => { if (c.state !== 'none' && cellState(s, k) === 'empty') out.add(c.idx); });
+    if ($('fUnread').checked) {
+      const pages = Math.ceil(fish.length / 100);
+      for (let p = 0; p < pages; p++) if (!owners.has(p)) for (let i = p * 100; i < Math.min(fish.length, p * 100 + 100); i++) out.add(i);
+    }
+    let allowed = 0;
+    if ($('fTime').checked) allowed |= F_TIME;
+    if ($('fWeather').checked) allowed |= F_WEATHER;
+    if ($('fPre').checked) allowed |= F_PRE;
+    if ($('fBig').checked) allowed |= F_BIG;
+    if ($('fOcean').checked || mode === 'spear') allowed |= F_OCEAN;
+    for (const i of [...out]) if (((fish[i][5] || 0) & ~allowed) !== 0) out.delete(i);
+    return out;
+  }
+
+  // "Route": repeatedly take the spot that covers the most fish not yet covered.
+  // "Count": every spot ranked by how many of the remaining fish it has.
+  function planStops(targets) {
+    if ($('sortCount').checked) {
+      return spots.map(sp => ({ sp, fresh: sp.fish.filter(i => targets.has(i)), also: [] }))
+        .filter(r => r.fresh.length).sort((a, b) => b.fresh.length - a.fresh.length || a.sp.id - b.sp.id);
+    }
+    const left = new Set(targets), stops = [];
+    while (left.size) {
+      let best = null, bestN = 0;
+      for (const sp of spots) {
+        // Ties go to the spot whose new fish carry fewer special conditions (easier to clear in one visit).
+        let n = 0; for (const i of sp.fish) if (left.has(i)) n += 1000 - Math.min(999, bitCount(fish[i][5] || 0));
+        if (n > bestN) { best = sp; bestN = n; }
+      }
+      if (!best) break;
+      const fresh = best.fish.filter(i => left.has(i));
+      const also = best.fish.filter(i => targets.has(i) && !left.has(i));
+      fresh.forEach(i => left.delete(i));
+      stops.push({ sp: best, fresh, also });
+    }
+    return stops;
+  }
+
+  function bitCount(v) { let c = 0; while (v) { c += v & 1; v >>= 1; } return c; }
+
+  function fishChip(i, dim) {
+    const li = document.createElement('li');
+    if (dim) li.className = 'dim';
+    const f = fish[i], flags = f[5] || 0;
+    li.append(f[1]);
+    const names = [];
+    for (const [bit, cls, label] of TAGS) if (flags & bit) {
+      const t = document.createElement('span'); t.className = 'tagc ' + cls; t.textContent = label; li.append(t); names.push(label);
+    }
+    li.title = f[1] + (names.length ? ' · ' + names.join(', ') + ' 조건' : ' · 상시');
+    return li;
+  }
+
+  function refreshPlan() {
+    if (!fish.length) return;
+    const targets = targetFish();
+    const stops = planStops(targets);
+    $('planLeft').textContent = targets.size;
+    $('planSpots').textContent = stops.length;
+    const list = $('planList'); list.innerHTML = '';
+    const empty = $('planEmpty');
+    const readAny = pageOwners().size > 0;
+    if (!stops.length) {
+      empty.hidden = false;
+      empty.textContent = !readAny && !$('fUnread').checked ? '스크린샷을 올리면 못 낚은 물고기로 낚시터 순서를 정해준담메.'
+        : '조건에 맞는 못 낚은 물고기가 없담메. 위에서 포함할 물고기를 더 골라보람메.';
+      $('planMore').hidden = true;
+      return;
+    }
+    empty.hidden = true;
+    const total = targets.size;
+    let done = 0;
+    const route = $('sortRoute').checked;
+    stops.slice(0, planShown).forEach((r, n) => {
+      done += r.fresh.length;
+      const li = document.createElement('li'); li.className = 'stop' + (n < 3 ? ' top' : '');
+      const where = [r.sp.zone, r.sp.region].filter((v, k, a) => v && a.indexOf(v) === k).join(' · ');
+      li.innerHTML = `<div class="stop-head"><div class="stop-rank">${n + 1}</div><div><div class="stop-name"></div><div class="stop-where"></div></div><div class="stop-count"><b>${r.fresh.length}</b><span>${route ? '새로 낚을 물고기' : '못 낚은 물고기'}</span></div></div>`;
+      li.querySelector('.stop-name').textContent = r.sp.name;
+      li.querySelector('.stop-where').textContent = where + (r.sp.ocean ? '' : ` (X ${r.sp.x}, Y ${r.sp.y})`);
+      if (route) {
+        const bar = document.createElement('div'); bar.className = 'stop-bar'; bar.title = `여기까지 ${done} / ${total}마리`;
+        bar.innerHTML = `<i style="width:${(done / total * 100).toFixed(1)}%"></i>`; li.append(bar);
+      }
+      const ul = document.createElement('ul'); ul.className = 'fishes';
+      r.fresh.forEach(i => ul.append(fishChip(i, false)));
+      li.append(ul);
+      if (r.also.length) {
+        const p = document.createElement('p'); p.className = 'stop-also';
+        p.textContent = `앞 순위에서 셈한 ${r.also.map(i => fish[i][1]).join(', ')}도 여기서 낚인담메.`;
+        li.append(p);
+      }
+      list.append(li);
+    });
+    const rest = stops.length - Math.min(planShown, stops.length);
+    $('planMore').hidden = rest <= 0;
+    $('planMore').textContent = `낚시터 ${Math.min(rest, PLAN_PAGE)}곳 더 보기 (남은 ${rest}곳)`;
+  }
+  PLAN_INPUTS.forEach(id => $(id).addEventListener('change', () => { planShown = PLAN_PAGE; refreshPlan(); saveUi(); }));
+  $('planMore').addEventListener('click', () => { planShown += PLAN_PAGE; refreshPlan(); });
 
   function refreshAll() {
     drawPager();
     applyVisibility();
     refreshExport();
+    refreshPlan();
+    modeInfo();
     // update duplicate notes
     const owners = pageOwners();
     for (const s of shots) if (s.status === 'done' && s.result.page >= 0) {
@@ -915,6 +1192,5 @@ footer a { color: inherit; }
   boot().catch(err => { $('dataInfo').textContent = '물고기 데이터를 못 불러왔담메. 페이지를 새로고침해달람메. (' + err.message + ')'; });
 })();
 </script>
-
 </body>
 </html>
