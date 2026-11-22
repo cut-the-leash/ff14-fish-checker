@@ -212,11 +212,13 @@ textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; backg
 .stop-count { text-align: right; }
 .stop-count b { font-family: var(--display); font-size: 24px; line-height: 1; font-variant-numeric: tabular-nums; }
 .stop-count span { display: block; font-size: 11px; color: var(--muted); white-space: nowrap; }
-.stop-bar { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
-.stop-bar i { display: block; height: 100%; background: var(--kelp); }
 .fishes { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .fishes li { font-size: 13px; padding: 3px 9px; border-radius: 999px; background: var(--paper); border: 1px solid var(--line); display: inline-flex; gap: 5px; align-items: center; word-break: keep-all; }
 .fishes li.dim { opacity: .5; }
+.fishes li { cursor: pointer; touch-action: manipulation; user-select: none; }
+.fishes li:hover { border-color: var(--kelp); }
+.plan-undo { margin: -6px 0 0; font-size: 13px; color: var(--kelp); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.plan-undo button { font: inherit; font-size: 12px; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--sheet); cursor: pointer; color: var(--ink); }
 .tagc { font-size: 10px; font-weight: 600; padding: 0 5px; border-radius: 4px; line-height: 16px; }
 .tagc.t, .tagc.w { background: var(--amber-soft); color: var(--amber); }
 .tagc.b { background: var(--lure-soft); color: var(--lure); }
@@ -381,7 +383,7 @@ footer a { color: inherit; }
     <div class="plan-head">
       <div>
         <h2 id="planTitle">어디부터 낚으러 갈까</h2>
-        <p id="planLede">읽은 스크린샷에서 아직 못 낚은 물고기를 낚시터별로 묶어서, 들르면 좋은 순서대로 보여준담메. 한 낚시터에 여러 곳에서 낚이는 물고기가 있으면 앞 순위에서 먼저 셈한담메.</p>
+        <p id="planLede">읽은 스크린샷에서 아직 못 낚은 물고기를 낚시터별로 묶어서, 들르면 좋은 순서대로 보여준담메. 한 낚시터에 여러 곳에서 낚이는 물고기가 있으면 앞 순위에서 먼저 셈한담메. 물고기 이름을 두 번 누르면 낚은 걸로 체크된담메.</p>
       </div>
       <div class="plan-stats">
         <div><b id="planLeft">0</b><span>못 낚은 물고기</span></div>
@@ -408,6 +410,7 @@ footer a { color: inherit; }
         <label class="chk"><input type="checkbox" id="fUnread">못 낚은 걸로 치기</label>
       </fieldset>
     </div>
+    <p class="plan-undo" id="planUndo" hidden><span id="planUndoText"></span><button type="button" id="planUndoBtn">되돌리기</button></p>
     <p class="plan-empty" id="planEmpty" hidden></p>
     <ol class="plan-list" id="planList"></ol>
     <button class="btn ghost plan-more" id="planMore" type="button" hidden>낚시터 더 보기</button>
@@ -426,7 +429,8 @@ footer a { color: inherit; }
   const TOTAL_PAGES_FALLBACK = 16;
 
   // Two guide tabs, each with its own fish list and spots. Shots remember which tab they belong to.
-  const D = { fish: { fish: [], spots: [], label: '낚시', pages: 16 }, spear: { fish: [], spots: [], label: '작살', pages: 3 } };
+  // manual: guide indexes marked caught from the planner on pages with no screenshot.
+  const D = { fish: { fish: [], spots: [], label: '낚시', pages: 16, manual: new Set() }, spear: { fish: [], spots: [], label: '작살', pages: 3, manual: new Set() } };
   let mode = 'fish';
   let fish = [];            // the current tab's fish: [id, name, iconIndex, inTracker, big, flags]
   const FD = (s) => D[s.mode].fish;
@@ -481,7 +485,7 @@ footer a { color: inherit; }
   const PLAN_INPUTS = ['fTime', 'fWeather', 'fPre', 'fBig', 'fOcean', 'fUnread', 'sortRoute', 'sortCount'];
   function saveUi() {
     const plan = {}; PLAN_INPUTS.forEach(id => { plan[id] = $(id).checked; });
-    store.setUi({ merge: $('merge').value, scope: $('scopeBig').checked ? 'big' : 'all', plan, mode });
+    store.setUi({ merge: $('merge').value, scope: $('scopeBig').checked ? 'big' : 'all', plan, mode, manual: { fish: [...D.fish.manual], spear: [...D.spear.manual] } });
   }
 
   // ---------- data ----------
@@ -530,6 +534,7 @@ footer a { color: inherit; }
     if (ui) {
       if (ui.merge) { $('merge').value = ui.merge; $('merge').dispatchEvent(new Event('input')); }
       if (ui.scope === 'big') $('scopeBig').checked = true;
+      if (ui.manual) for (const m of ['fish', 'spear']) D[m].manual = new Set((ui.manual[m] || []).filter(i => i < D[m].fish.length));
       if (ui.plan) PLAN_INPUTS.forEach(id => { if (id in ui.plan) $(id).checked = ui.plan[id]; });
     }
     const saved = (await store.all()).sort((a, b) => a.seq - b.seq);
@@ -554,10 +559,11 @@ footer a { color: inherit; }
     $('examples').hidden = spear;
     $('planTitle').textContent = spear ? '어디부터 작살질하러 갈까' : '어디부터 낚으러 갈까';
     $('planLede').textContent = spear
-      ? '읽은 스크린샷에서 아직 못 잡은 물고기를 작살질 낚시터별로 묶어서, 들르면 좋은 순서대로 보여준담메. 여러 곳에서 잡히는 물고기는 앞 순위에서 먼저 셈한담메.'
-      : '읽은 스크린샷에서 아직 못 낚은 물고기를 낚시터별로 묶어서, 들르면 좋은 순서대로 보여준담메. 한 낚시터에 여러 곳에서 낚이는 물고기가 있으면 앞 순위에서 먼저 셈한담메.';
+      ? '읽은 스크린샷에서 아직 못 잡은 물고기를 작살질 낚시터별로 묶어서, 들르면 좋은 순서대로 보여준담메. 여러 곳에서 잡히는 물고기는 앞 순위에서 먼저 셈한담메. 물고기 이름을 두 번 누르면 잡은 걸로 체크된담메.'
+      : '읽은 스크린샷에서 아직 못 낚은 물고기를 낚시터별로 묶어서, 들르면 좋은 순서대로 보여준담메. 한 낚시터에 여러 곳에서 낚이는 물고기가 있으면 앞 순위에서 먼저 셈한담메. 물고기 이름을 두 번 누르면 낚은 걸로 체크된담메.';
     $('fOceanChip').hidden = spear;
     $('modeNote').hidden = true;
+    $('planUndo').hidden = true; lastMark = null;
     const ver = D.fish.version ? `, 트래커 기준 ${D.fish.version} 패치` : '';
     $('dataInfo').textContent = `${D[m].label} 도감 데이터: ${fish.length.toLocaleString()}종${ver} · 도감 ${pages}페이지`;
     if (!quiet) { saveUi(); refreshAll(); }
@@ -910,6 +916,7 @@ footer a { color: inherit; }
     }
     for (let i = queue.length - 1; i >= 0; i--) if (!shots.includes(queue[i])) queue.splice(i, 1);
     selectedPage = null;
+    D[mode].manual.clear(); saveUi();
     if (!shots.length) addSample(); else refreshAll();
   });
 
@@ -953,6 +960,10 @@ footer a { color: inherit; }
         ids.add(f[0]);
       });
     }
+    for (const m of ['fish', 'spear']) for (const i of D[m].manual) {
+      const f = D[m].fish[i];
+      if (f && f[3] && (!bigOnly || f[4])) ids.add(f[0]);
+    }
     let merged = 0;
     for (const id of mergeIds) {
       const f = byId.get(id);
@@ -974,16 +985,14 @@ footer a { color: inherit; }
   function refreshText() {
     const scope = $('tBig').checked ? 'big' : $('tTracker').checked ? 'tracker' : 'all';
     const owners = pageOwners();
+    const idx = new Set(D[mode].manual);
+    for (const [, s] of owners) s.result.cells.forEach((c, k) => { if (c.state !== 'none' && cellState(s, k) === 'caught') idx.add(c.idx); });
     const names = [];
-    [...owners.keys()].sort((a, b) => a - b).forEach(p => {
-      const s = owners.get(p);
-      s.result.cells.forEach((c, k) => {
-        if (c.state === 'none' || cellState(s, k) !== 'caught') return;
-        const f = fish[c.idx];
-        if (scope === 'tracker' && !f[3]) return;
-        if (scope === 'big' && !f[4]) return;
-        names.push(f[1]);
-      });
+    [...idx].sort((a, b) => a - b).forEach(i => {
+      const f = fish[i];
+      if (scope === 'tracker' && !f[3]) return;
+      if (scope === 'big' && !f[4]) return;
+      names.push(f[1]);
     });
     $('txt').value = names.join('\n');
     $('txtCount').textContent = names.length ? `${names.length}마리` : '';
@@ -1076,7 +1085,7 @@ footer a { color: inherit; }
     if ($('fPre').checked) allowed |= F_PRE;
     if ($('fBig').checked) allowed |= F_BIG;
     if ($('fOcean').checked || mode === 'spear') allowed |= F_OCEAN;
-    for (const i of [...out]) if (((fish[i][5] || 0) & ~allowed) !== 0) out.delete(i);
+    for (const i of [...out]) if (((fish[i][5] || 0) & ~allowed) !== 0 || D[mode].manual.has(i)) out.delete(i);
     return out;
   }
 
@@ -1115,9 +1124,33 @@ footer a { color: inherit; }
     for (const [bit, cls, label] of TAGS) if (flags & bit) {
       const t = document.createElement('span'); t.className = 'tagc ' + cls; t.textContent = label; li.append(t); names.push(label);
     }
-    li.title = f[1] + (names.length ? ' · ' + names.join(', ') + ' 조건' : ' · 상시');
+    li.title = f[1] + (names.length ? ' · ' + names.join(', ') + ' 조건' : ' · 상시') + ' · 두 번 누르면 잡은 걸로 체크';
+    li.addEventListener('dblclick', () => markCaught(i));
     return li;
   }
+
+  // Double-clicking a fish in the planner marks it caught: on its screenshot when the page was read, otherwise in a manual list.
+  let lastMark = null;
+  function markCaught(i) {
+    const s = pageOwners().get(Math.floor(i / 100));
+    const k = s ? s.result.cells.findIndex(c => c.idx === i) : -1;
+    if (s && k >= 0) {
+      const prev = s.overrides.has(k) ? s.overrides.get(k) : undefined;
+      if (s.result.cells[k].state === 'caught') s.overrides.delete(k); else s.overrides.set(k, 'caught');
+      saveShot(s); renderShot(s);
+      lastMark = { m: mode, i, undo: () => { if (prev === undefined) s.overrides.delete(k); else s.overrides.set(k, prev); saveShot(s); renderShot(s); } };
+    } else {
+      const set = D[mode].manual; set.add(i); saveUi();
+      lastMark = { m: mode, i, undo: () => { set.delete(i); saveUi(); } };
+    }
+    $('planUndoText').textContent = `${fish[i][1]}, ${mode === 'spear' ? '잡은' : '낚은'} 걸로 체크했담메.`;
+    $('planUndo').hidden = false;
+    refreshAll();
+  }
+  $('planUndoBtn').addEventListener('click', () => {
+    if (!lastMark) return;
+    lastMark.undo(); lastMark = null; $('planUndo').hidden = true; refreshAll();
+  });
 
   function refreshPlan() {
     if (!fish.length) return;
@@ -1136,20 +1169,13 @@ footer a { color: inherit; }
       return;
     }
     empty.hidden = true;
-    const total = targets.size;
-    let done = 0;
     const route = $('sortRoute').checked;
     stops.slice(0, planShown).forEach((r, n) => {
-      done += r.fresh.length;
       const li = document.createElement('li'); li.className = 'stop' + (n < 3 ? ' top' : '');
       const where = [r.sp.zone, r.sp.region].filter((v, k, a) => v && a.indexOf(v) === k).join(' · ');
       li.innerHTML = `<div class="stop-head"><div class="stop-rank">${n + 1}</div><div><div class="stop-name"></div><div class="stop-where"></div></div><div class="stop-count"><b>${r.fresh.length}</b><span>${route ? '새로 낚을 물고기' : '못 낚은 물고기'}</span></div></div>`;
       li.querySelector('.stop-name').textContent = r.sp.name;
       li.querySelector('.stop-where').textContent = where + (r.sp.ocean ? '' : ` (X ${r.sp.x}, Y ${r.sp.y})`);
-      if (route) {
-        const bar = document.createElement('div'); bar.className = 'stop-bar'; bar.title = `여기까지 ${done} / ${total}마리`;
-        bar.innerHTML = `<i style="width:${(done / total * 100).toFixed(1)}%"></i>`; li.append(bar);
-      }
       const ul = document.createElement('ul'); ul.className = 'fishes';
       r.fresh.forEach(i => ul.append(fishChip(i, false)));
       li.append(ul);
