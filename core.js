@@ -376,6 +376,8 @@
       const du = fit.unk[k];
       let state;
       if (de < 34 && de < du - 8) state = 'caught';
+      // No reference icon for this fish: anything clearly unlike a "?" or an empty slot counts as caught.
+      else if (de === Infinity && du > 40 && !(fit.unk.blank && fit.unk.blank[k] < 30)) state = 'caught';
       else if (du < 26 && du < de - 8) state = 'empty';
       else state = 'unsure';
       cells.push({ idx, state, de, du });
